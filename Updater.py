@@ -3,7 +3,7 @@
     instead of having to rebuild the entire system everytime a change is needed
     '''
 #prefined imports
-import os,subprocess,time
+import os,subprocess,time,shutil
 
 class Launcher():
     '''Runs the main window of the invoice development
@@ -15,12 +15,18 @@ class Launcher():
             Call the function to launch the GUI
         '''
         super().__init__()
+#        try:
         try:
             os.system('taskkill /F /IM "BEI_Invoice.exe" /T')
-            self.file_pull()
-            
+            time.sleep(2)
         except:
-            pass
+            False
+        self.file_pull()
+        self.recreate_exe()
+        self.copy_picture()
+            
+#        except:
+#            print('Update failed')
         time.sleep(2)
         
     def file_pull(self):
@@ -34,12 +40,14 @@ class Launcher():
         subprocess.call(['pyinstaller','BEI_Invoice.py',
                          '--windowed','--noconfirm'])     
         
-        copy=['BEI_Logo.png','bei_logo_R5r_icon.ico','loader_image.png']
+    def copy_picture(self):
+        copy=['BEI_Logo.png','loader_image.png','bei_icon.ico']
         dire=os.getcwd()
         
         dest=os.path.join(os.path.join(dire,'dist'),'BEI_Invoice')
         for i in copy:
-            subprocess.call(['cp',os.path.join(dire,i), os.path.join(dest,i)])
+            shutil.copy2(i,os.path.join(dest))
+        print('Update successful')
     
     
 if __name__=="__main__":

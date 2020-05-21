@@ -998,11 +998,10 @@ class Invoice(QMainWindow):
             
     def updater(self):
         QMessageBox.information(self,'Restart Required',
-                                'Please relaunch program to apply updates',
+                                'Run BEI_Updater and Restart program',
                                 QMessageBox.Ok)
         self.close()
-        subprocess.call(['git','pull'])
-    
+        
     def change_address(self):
         self.edi=EDI(self.font,self.size_policy,self.base_directory)
         
