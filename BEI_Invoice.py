@@ -144,30 +144,27 @@ class Invoice(QMainWindow):
         self.menuFile.addAction(self.actionQuit)
         
         self.menuEdit=self.menuBar().addMenu('&Edit')
+        self.menuEdit_Change_In=QMenu('Change Basic Invoice Information',self)
+        self.menuEdit_Change_Sy=QMenu('Change Operating Data',self)
+        
         self.actionLaborRates=QAction('&Change Standard Labor Rates',self)
         self.actionLaborRates.triggered.connect(self.labor_rates)
         self.actionAddTechnician=QAction('&Add Technician',self)
         self.actionAddTechnician.triggered.connect(self.add_tech)
         self.actionChangeDate=QAction('&Change Invoice Date',self)
         self.actionChangeDate.triggered.connect(self.date_change)
-        self.actionJobNumbers=QAction('&More Job Numbers',self)
-        self.actionJobNumbers.triggered.connect(self.new_job_nums)
-        self.actionPartialPayment=QAction('&Partial Payment',self)
-        self.actionPartialPayment.triggered.connect(self.partial_payment)
-        self.actionPartialPayment.setDisabled(True)
-        self.actionFinanceCharges=QAction('&Add Finance Charges',self)
-        self.actionFinanceCharges.triggered.connect(self.finance_charges)
-        self.actionFinanceCharges.setDisabled(True)
+        self.actionChangeCustomerAddress=QAction('&Change Customer Address',self)
+        self.actionChangeCustomerAddress.triggered.connect(self.change_address)
         self.actionBasicInfo=QAction('&Change Basic Information',self)
         self.actionBasicInfo.triggered.connect(self.change_basic_info)
         self.actionBasicInfo.setDisabled(True)
-        self.actionChangeCustomerAddress=QAction('&Change Customer Address',self)
-        self.actionChangeCustomerAddress.triggered.connect(self.change_address)
-        
-        self.menuEdit.addActions([self.actionLaborRates,self.actionAddTechnician,
-                                  self.actionChangeDate,self.actionJobNumbers,
-                                  self.actionPartialPayment,self.actionFinanceCharges,
-                                  self.actionBasicInfo,self.actionChangeCustomerAddress]) 
+        self.menuEdit_Change_In.addActions([self.actionBasicInfo])
+        self.menuEdit_Change_Sy.addActions([self.actionLaborRates,
+                                            self.actionAddTechnician,
+                                            self.actionChangeDate,
+                                            self.actionChangeCustomerAddress])
+        self.menuEdit.addMenu(self.menuEdit_Change_In)
+        self.menuEdit.addMenu(self.menuEdit_Change_Sy)
         
         self.menuView=self.menuBar().addMenu('&View')
         self.actionViewLaborBreakdown=QAction('&View Labor Breakdown',self)
@@ -188,6 +185,21 @@ class Invoice(QMainWindow):
                                   self.actionViewAllWindows,
                                   self.actionViewCutomer,
                                   self.actionViewCompany])
+    
+        self.actionJobNumbers=QAction('&More Job Numbers',self)
+        self.actionJobNumbers.triggered.connect(self.new_job_nums)
+        self.menuJobNumbers=self.menuBar().addMenu('Job Numbers')
+        self.menuJobNumbers.addAction(self.actionJobNumbers)
+    
+        self.menuPayment=self.menuBar().addMenu('&Finance/Payments')
+        self.actionPartialPayment=QAction('&Partial Payment',self)
+        self.actionPartialPayment.triggered.connect(self.partial_payment)
+        self.actionPartialPayment.setDisabled(True)
+        self.actionFinanceCharges=QAction('&Add Finance Charges',self)
+        self.actionFinanceCharges.triggered.connect(self.finance_charges)
+        self.actionFinanceCharges.setDisabled(True)
+        self.menuPayment.addActions([self.actionPartialPayment,
+                                     self.actionFinanceCharges])
         
         self.menuHelp=self.menuBar().addMenu('&Help')
         self.actionViewCheatSheet=QAction('&View Cheat Sheet',self)
@@ -972,6 +984,7 @@ class Invoice(QMainWindow):
             else:
                 os.unlink(old_final_comp)
                 os.unlink(old_final_cust)
+                
     def view_windows(self):
         '''Used to re-initialize the totals and main window'''
         self.save_invoice()
@@ -1013,7 +1026,9 @@ class Invoice(QMainWindow):
             location=os.path.join(location,'Customer')
             cust_location=os.path.join(location,self.customer.replace(' ','_'))
             machine_location=os.path.join(cust_location,self.machine_text.replace(' ','_'))
-            job_location=os.path.join(machine_location,'{}.pdf'.format(self.current_job))
+            job_location=os.path.join(machine_location,
+                                      '{}.pdf'.format(self.current_job)).replace('&','^&')
+            print(job_location)
             subprocess.Popen(job_location,shell=True)
         else:
             pass
@@ -1026,7 +1041,8 @@ class Invoice(QMainWindow):
             location=os.path.join(location,'Company')
             cust_location=os.path.join(location,self.customer.replace(' ','_'))
             machine_location=os.path.join(cust_location,self.machine_text.replace(' ','_'))
-            job_location=os.path.join(machine_location,'{}.pdf'.format(self.current_job))
+            job_location=os.path.join(machine_location,
+                                      '{}.pdf'.format(self.current_job)).replace('&','^&')
             subprocess.Popen(job_location,shell=True)
         else:
             pass
@@ -1079,20 +1095,6 @@ class Invoice(QMainWindow):
    
     def billing_envelopes(self):
         self.billing_=CE(self.base_directory)
-
-#    def old_job(self):
-#        desktop=os.path.expanduser('~/Desktop')
-#        file,ok=QFileDialog.getOpenFileName(self,'Convert Existing Invoice',
-#                            desktop)
-#        if file!='':       
-#            book=pd(self.old_invoice)
-#            matrix=book.values.tolist()
-#            converter=OJC(self.base_directory,file,matrix,checker)
-#            num=str(converter.job_num)
-#            self.current_job=num
-#            if not self.recent_open:
-#                self.recent_invoices()
-#            self.read_in_data()
             
 if __name__=="__main__":
     app=QApplication(sys.argv)

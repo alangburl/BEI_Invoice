@@ -37,13 +37,15 @@ class PDF_Builder():
         self.location=os.path.join(os.path.join(base_directory,
                                                 'Saved_Invoices'),str(job_num))
         self.preface_data_read_in()
-        self.preface_builder()
+        
         ###
         if comp_cust=='Company':
+            self.preface_builder('Company')
             self.parts_read_in('Company')
             self.total_comments()
             self.tex_builder('Company')
         elif comp_cust=='Customer':
+            self.preface_builder('Customer')
             self.parts_read_in('Customer')
             self.total_comments()
             self.tex_builder('Customer')            
@@ -70,13 +72,16 @@ class PDF_Builder():
         t=open(date_location,'r')
         self.date=t.readlines()[0]
         t.close()
-    def preface_builder(self):
+    def preface_builder(self,version):
         '''Define the preface of each pdf
         '''
         #get the lines from template
         p=open(os.path.join(os.path.join(self.base_directory,'Built_Invoices'),
                             'preface_template.tex'),'r')
-        pref=p.readlines()[0:-2]
+        if version=='Company':
+            pref=p.readlines()[0:-2]
+        elif version=='Customer':
+            pref=p.readlines()
         p.close()
         preface_data=[]
         for i in pref:
@@ -235,8 +240,11 @@ class PDF_Builder():
        tex_location=os.path.join(location,'{}.tex'.format(self.basic_info[0]))
        startupinfo = subprocess.STARTUPINFO()
        startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
-       subprocess.call(['pdflatex',tex_location],startupinfo=startupinfo)
+       
        if version=='Customer':
+           subprocess.call(['pdflatex',tex_location],startupinfo=startupinfo)
+           subprocess.call(['pdflatex',tex_location],startupinfo=startupinfo)
+       if version=='Company':
            subprocess.call(['pdflatex',tex_location],startupinfo=startupinfo)
        os.unlink(tex_location)
        

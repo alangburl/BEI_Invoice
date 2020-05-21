@@ -16,7 +16,7 @@ class Job_Numbers(QMainWindow):
         self.top=300
         self.width=400
         self.height=375
-        self.setWindowIcon(QIcon('loader.png'))
+        self.setWindowIcon(QIcon('BEI_Logo.png'))
         self.font=QFont()
         self.font.setPointSize(12)
         self.size_policy=QSizePolicy.Expanding
@@ -104,7 +104,7 @@ class Job_Numbers(QMainWindow):
         self.th.start()
         
     def initial_numbers(self):
-        first_number=(9260)
+        first_number=(10500)
         
         self.z=open(self.loca,'w')
         number=first_number
