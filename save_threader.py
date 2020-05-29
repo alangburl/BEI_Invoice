@@ -14,8 +14,8 @@ class Saver(QThread):
         self.job=job_number
         
     def run(self):
-#        try:
+        try:
             PDF.PDF_Builder(self.job,self.loc,'Company')
             PDF.PDF_Builder(self.job,self.loc,'Customer')
-#        except:
-#            self.out.emit(1)
+        except:
+            self.out.emit(1)

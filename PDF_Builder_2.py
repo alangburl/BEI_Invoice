@@ -1,5 +1,5 @@
 #updated PDF builder to reduce down to one class instead of two
-import os, sys,subprocess,shutil,time
+import os, sys,subprocess,shutil
 from pathlib import Path
 from PyQt5.QtWidgets import QMessageBox,QWidget
 class PDF_Builder():
