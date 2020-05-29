@@ -1,4 +1,4 @@
-import PDF_Builder
+import PDF_Builder_2 as PDF
 
 from PyQt5.QtCore import QThread, pyqtSignal
 
@@ -14,8 +14,8 @@ class Saver(QThread):
         self.job=job_number
         
     def run(self):
-        try:
-            PDF_Builder.PDF_Builder_Company(self.job,self.loc)
-            PDF_Builder.PDF_Builder_Customer(self.job,self.loc)
-        except:
-            self.out.emit(1)
+#        try:
+            PDF.PDF_Builder(self.job,self.loc,'Company')
+            PDF.PDF_Builder(self.job,self.loc,'Customer')
+#        except:
+#            self.out.emit(1)

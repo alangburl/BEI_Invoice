@@ -1,5 +1,5 @@
 #updated PDF builder to reduce down to one class instead of two
-import os, sys,subprocess,shutil
+import os, sys,subprocess,shutil,time
 from pathlib import Path
 from PyQt5.QtWidgets import QMessageBox,QWidget
 class PDF_Builder():
@@ -246,7 +246,7 @@ class PDF_Builder():
            subprocess.call(['pdflatex',tex_location],startupinfo=startupinfo)
        if version=='Company':
            subprocess.call(['pdflatex',tex_location],startupinfo=startupinfo)
-       os.unlink(tex_location)
+
        
        #make/check if the directory BEI_Invoices-Company-CustomerName-Machine
        #exists, if not create it and save the pdf there
@@ -263,7 +263,7 @@ class PDF_Builder():
        #check to see if the machine is in location-new_customer
        if new_machine not in os.listdir(os.path.join(location,new_customer)):
            os.mkdir(new_location)
-       
+           
        current_location=os.path.join(os.getcwd(),
                                      '{}.pdf'.format(self.basic_info[0]))
        #shut the pdf in the bei folder to ensure proper writing is possible
@@ -276,6 +276,7 @@ class PDF_Builder():
        #remove the two wasted files from code directory
        os.unlink(os.path.join(os.getcwd(),'{}.log'.format(self.basic_info[0])))
        os.unlink(os.path.join(os.getcwd(),'{}.aux'.format(self.basic_info[0])))
+#       os.unlink(tex_location)
        
     def print_tex(self):
         '''Actually print the document
