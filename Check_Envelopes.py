@@ -1,11 +1,8 @@
 
 import sys,os,subprocess,shutil
 from PyQt5.QtWidgets import (QApplication, QPushButton,QWidget,QGridLayout,
-                             QSizePolicy,QLineEdit,QTextEdit,
-                             QMessageBox,QInputDialog,QMainWindow,QAction
-                             ,QDockWidget,QTableWidgetItem,QVBoxLayout,
-                             QTabWidget,QSystemTrayIcon,QListView,
-                             QAbstractItemView,QCompleter,QLabel)
+                             QSizePolicy,QLineEdit,QCompleter,QLabel,
+                             QComboBox)
 from PyQt5.QtGui import (QFont,QIcon)
 from PyQt5.QtGui import QImage, QPalette, QBrush
 class Check_Envelopes(QWidget):
@@ -43,6 +40,15 @@ class Check_Envelopes(QWidget):
         self.geometry()
             
     def geometry(self):
+        type_label=QLabel('Envelope Size',self)
+        type_label.setSizePolicy(self.size_policy,self.size_policy)
+        type_label.setFont(self.font)
+                
+        self.envelop_type=QComboBox(self)
+        self.envelop_type.setSizePolicy(self.size_policy,self.size_policy)
+        self.envelop_type.setFont(self.font)
+        self.envelop_type.addItems(['Business','Personal'])
+        
         check_label=QLabel('Check wrote to:',self)
         check_label.setFont(self.font)
         check_label.setSizePolicy(self.size_policy,self.size_policy)
@@ -80,20 +86,22 @@ class Check_Envelopes(QWidget):
         process.clicked.connect(self.printer)
         
         layout=QGridLayout(self)
-        layout.addWidget(check_label,0,0)
-        layout.addWidget(self.customer_name,0,1)
-        layout.addWidget(address1_label,1,0)
-        layout.addWidget(self.address_1,1,1)
-        layout.addWidget(address2_label,2,0)
-        layout.addWidget(self.address_2,2,1)
-        layout.addWidget(process,3,0,1,2)
+        layout.addWidget(type_label,0,0)
+        layout.addWidget(self.envelop_type,0,1)
+        layout.addWidget(check_label,1,0)
+        layout.addWidget(self.customer_name,1,1)
+        layout.addWidget(address1_label,2,0)
+        layout.addWidget(self.address_1,2,1)
+        layout.addWidget(address2_label,3,0)
+        layout.addWidget(self.address_2,3,1)
+        layout.addWidget(process,4,0,1,2)
         self.setLayout(layout)
         self.show()
         
     def fill_information(self):
         #get the name
         self.name=self.customer_name.text().replace(' ','_')
-        
+        self.type=self.envelop_type.currentText()
         line=0
         if self.name in self.names:
             for i in range(len(self.names)):
@@ -166,7 +174,7 @@ class Check_Envelopes(QWidget):
         file=open(tex_location,'w')
         header_return=[r'\documentclass{letter}',
                 r'\usepackage{graphics}',
-                r'\usepackage[personalenvelope]{envlab}',
+                r'\usepackage[envelope]{envlab}'.replace('envelope',self.type.lower()),
                 r'\makelabels',r'\begin{document}',
                 r'\startlabels',
                 r'\mlabel{Burl Equipment Inc\\ PO Box 347\\ Cimarron KS 67835}{']
