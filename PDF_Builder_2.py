@@ -276,7 +276,7 @@ class PDF_Builder():
        #remove the two wasted files from code directory
        os.unlink(os.path.join(os.getcwd(),'{}.log'.format(self.basic_info[0])))
        os.unlink(os.path.join(os.getcwd(),'{}.aux'.format(self.basic_info[0])))
-#       os.unlink(tex_location)
+       os.unlink(tex_location)
        
     def print_tex(self):
         '''Actually print the document
