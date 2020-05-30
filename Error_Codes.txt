@@ -1,0 +1,14 @@
+100s- reserved for opening invoices
+200s- reserved for saving invoices, csv files
+300s- reserved for saving pdf files
+400s- reserved for recalculating totals 
+500s- reserved for all other failures
+	501- Basic Info Change Error
+	502- Baisc Info File Move Error
+	503- Finance Charge Error
+	504- Partial Payment Error
+	505- Write cehat sheet error
+	506- Read cheat sheet error
+	507- More job number error
+	508- Date Changing File Error
+	509- Labor Breakdown Error

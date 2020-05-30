@@ -15,6 +15,7 @@ from edit_customer_info import Edit_Customer_Information as EDI
 from enevelope_writer import Enevelope_Writer as EWriter
 from Envelope_printer import Envelope_Printer as EP
 from Check_Envelopes import Check_Envelopes as CE
+from Basic_Update import Update
 #prefined imports
 import subprocess,psutil
 import sys,os,time
@@ -136,7 +137,7 @@ class Invoice(QMainWindow):
                                    self.actionBilledEnvelopes])
         
         self.actionQuit=QAction('&Exit',self)
-        self.actionQuit.triggered.connect(self.closing)
+        self.actionQuit.triggered.connect(self.close)
         self.actionQuit.setShortcut('Alt+F4')
         self.menuFile.addActions([self.actionNew, self.actionOpen,
                                   self.actionSave,self.actionPrint])
@@ -224,15 +225,14 @@ class Invoice(QMainWindow):
             self.new_window=New_Invoice(12,self.base_directory)
 #            self.new_window.basic_information()
             self.new_window.start.clicked.connect(self.job_num_insertion)
-            self.new_window.customer_address_line_2.returnPressed.connect(self.new_window.information_)
-            self.new_window.customer_address_line_2.returnPressed.connect(self.job_num_insertion)
+#            self.new_window.customer_address_line_2.returnPressed.connect(self.new_window.information_)
+#            self.new_window.customer_address_line_2.returnPressed.connect(self.job_num_insertion)
         except:
             self.new_window=New_Invoice(12,self.base_directory)
 #            self.new_window.basic_information()
             self.new_window.start.clicked.connect(self.job_num_insertion)
-            self.new_window.customer_address_line_2.returnPressed.connect(self.new_window.information_)
-            self.new_window.customer_address_line_2.returnPressed.connect(self.job_num_insertion)
-            
+#            self.new_window.customer_address_line_2.returnPressed.connect(self.new_window.information_)
+#            self.new_window.customer_address_line_2.returnPressed.connect(self.job_num_insertion)
             
     def job_num_insertion(self):
         '''Call the table with the job number given in the new invoice
@@ -735,6 +735,7 @@ class Invoice(QMainWindow):
         self.save_invoice(printing=True)
         self.printed_list[self.current_job]=[self.customer,self.machine_text]
         try:
+            #error will be handled internal to pdf2
             pdf2.PDF_Builder(self.current_job,
                                 self.base_directory,'Company').print_tex()
             pdf2.PDF_Builder(self.current_job,
@@ -749,31 +750,31 @@ class Invoice(QMainWindow):
         self.envelope_date=envelope_date.dater()
         self.actionEnvelope.setEnabled(True)
         self.actionEnvelope1.setEnabled(True)
-        
-    def closing(self):
-#        self.save_invoice()
-        self.close()
-        
+                
     def breakdown(self):
         '''view the labor break down
         '''
-        #open the labor rates to get the names 
-        loc=os.path.join(self.base_directory,'Basic_Information_Totals')
-        file_loc=os.path.join(loc,'Labor_Rates.csv')
-        f=open(file_loc,'r')
-        f_data=f.readlines()
-        f.close()
-        names=[]
-        for i in range(len(f_data)):
-            names.append(f_data[i].split(sep=',')[0])
-        #get the totals from the labor page
-        individauls=self.labor.find_tech_individual()
-        #combine the two lists into a single string
-        combined=''
-        for i in range(len(individauls)):
-            combined+='{}: ${:,.2f}\n'.format(names[i],individauls[i])
-        QMessageBox.information(self,'Labor Breakdown',combined,
-                                            QMessageBox.Ok)
+        try:
+            #open the labor rates to get the names 
+            loc=os.path.join(self.base_directory,'Basic_Information_Totals')
+            file_loc=os.path.join(loc,'Labor_Rates.csv')
+            f=open(file_loc,'r')
+            f_data=f.readlines()
+            f.close()
+            names=[]
+            for i in range(len(f_data)):
+                names.append(f_data[i].split(sep=',')[0])
+            #get the totals from the labor page
+            individauls=self.labor.find_tech_individual()
+            #combine the two lists into a single string
+            combined=''
+            for i in range(len(individauls)):
+                combined+='{}: ${:,.2f}\n'.format(names[i],individauls[i])
+            QMessageBox.information(self,'Labor Breakdown',combined,
+                                                QMessageBox.Ok)
+        except:
+            print('Error 509- Labor Breakdown Error')
+            
     def date_change(self):
         '''change the data on the invoices for the month
         '''
@@ -791,39 +792,53 @@ class Invoice(QMainWindow):
         layout.addWidget(self.line)
         layout.addWidget(self.save_date)
         self.date_changed.setLayout(layout)
-        
-        d_location=os.path.join(self.base_directory,'Basic_Information_Totals')
-        self.date_location=os.path.join(d_location,'Invoice_Date.txt')
-        
-        y=open(self.date_location,'r')
-        date=y.readlines()
-        y.close()
-        self.line.setText(date[0])
-        self.date_changed.show()
+        try:
+            d_location=os.path.join(self.base_directory,'Basic_Information_Totals')
+            self.date_location=os.path.join(d_location,'Invoice_Date.txt')
+            
+            y=open(self.date_location,'r')
+            date=y.readlines()
+            y.close()
+            self.line.setText(date[0])
+            self.date_changed.show()
+        except:
+            print('Error 508- Date Change File Reading Error')
         
     def saved_date(self):
         '''
         Save the new date
         '''
-        y=open(self.date_location,'w')
-        y.write(self.line.text())
-        y.close()
-        self.date_changed.close()
+        try:
+            y=open(self.date_location,'w')
+            y.write(self.line.text())
+            y.close()
+            self.date_changed.close()
+        except:
+            print('Error 508- Date Change File Write Error')
         
     def new_job_nums(self):
         '''Run the class to create more job numbers 
         '''
-        self.n_jobs=Job_Numbers()
-        
+        try:
+            self.n_jobs=Job_Numbers()
+        except:
+            print('Error 507- Writing more job number error')
+            
     def cheat_sheet(self):
         '''Open the cheat sheet for viewing
         '''
-        self.chea=Read_Cheat_Sheet(self.font,self.size_policy,
+        try:
+            self.chea=Read_Cheat_Sheet(self.font,self.size_policy,
                                            self.base_directory)
+        except:
+            print('Error 506- Reading cheat sheet error')
         
     def add_cheat_task(self):
-        self.cheat=Write_Cheat_Sheet(self.font,self.size_policy,
+        try:
+            self.cheat=Write_Cheat_Sheet(self.font,self.size_policy,
                                      self.base_directory)
+        except:
+            print('Error 505- Writing cheat sheet error')
     
     def partial_payment(self):
         self.a=Partial_Payments(self.font,self.size_policy)
@@ -853,107 +868,38 @@ class Invoice(QMainWindow):
             self.calculate_totals()
             f.close()
         except:
-            pass
+            print('Error 504- Partial Payment Error')
     def finance_charges(self):
         self.charg=Finance_Charges(self.font,self.size_policy)
         self.charg.add.clicked.connect(self.fin_process)
         
     def fin_process(self):
-        self.charg.process()
-        self.finance+=self.charg.amount
-            
-        self.comments.append('Finance Charge of ${:,.2f} applied on {}, kindly remit payment immediately.'.format(self.charg.amount,self.charg.date))
-        location=os.path.join(os.path.join(self.base_directory,
-                                           'Saved_Invoices'),
-                                            '{}'.format(self.current_job))
-        fin_loc=os.path.join(location,'Finance.csv')
-        f=open(fin_loc,'w')
-        f.write(str(self.finance))
-        f.close()
-        self.calculate_totals()
+        try:
+            self.charg.process()
+            self.finance+=self.charg.amount
+                
+            self.comments.append('Finance Charge of ${:,.2f} applied on {}, kindly remit payment immediately.'.format(self.charg.amount,self.charg.date))
+            location=os.path.join(os.path.join(self.base_directory,
+                                               'Saved_Invoices'),
+                                                '{}'.format(self.current_job))
+            fin_loc=os.path.join(location,'Finance.csv')
+            f=open(fin_loc,'w')
+            f.write(str(self.finance))
+            f.close()
+            self.calculate_totals()
+        except:
+            print('Error 503- Finance Charge Error')
         
     def change_basic_info(self):
-        #first read in the current status of the basic info
-        location=os.path.join(os.path.join(self.base_directory,
-                                           'Saved_Invoices'),
-                                            '{}'.format(self.current_job))
-        e=open(os.path.join(location,'Basic_Info.csv'),'r')
-        basic=e.readlines()
-        e.close()
+        try:
+            self.update=Update(self.base_directory,self.current_job,
+                   self.font,self.size_policy)
+            self.update.tax.connect(self.update_basic_values)
+        except:
+            print('Error 501- Changing basic information Error')
         
-        self.update_info=QWidget()
-        self.update_info.setWindowTitle('Update Basic Information')
-        self.update_info.setWindowIcon(QIcon('BEI_Logo.png'))
-        mach=QLabel('Machine',self)
-        mach.setFont(self.font)
-        mach.setSizePolicy(self.size_policy,self.size_policy)
-        
-        tax=QLabel('Tax [%]',self)
-        tax.setFont(self.font)
-        tax.setSizePolicy(self.size_policy,self.size_policy)
-        
-        self.machine=QLineEdit(self)
-        self.machine.setFont(self.font)
-        self.machine.setSizePolicy(self.size_policy,self.size_policy)
-        self.machine.setText(basic[2])
-        
-        self.tax_value=QLineEdit(self)
-        self.tax_value.setFont(self.font)
-        self.tax_value.setSizePolicy(self.size_policy,self.size_policy)
-        self.tax_value.setText(str(round(float(basic[3].split(sep=',')[0])*100,2)))
-        
-        update=QPushButton('Update',self)
-        update.setFont(self.font)
-        update.setSizePolicy(self.size_policy,self.size_policy)
-        update.clicked.connect(self.update_basic_values)
-        
-        layout=QGridLayout()
-        layout.addWidget(mach,0,0)
-        layout.addWidget(self.machine,0,1)
-        layout.addWidget(tax,1,0)
-        layout.addWidget(self.tax_value,1,1)
-        layout.addWidget(update,2,0)
-        self.update_info.setLayout(layout)
-        self.update_info.show()
-        
-    def update_basic_values(self):
-        self.update_info.close()
-        location=os.path.join(os.path.join(self.base_directory,
-                                           'Saved_Invoices'),
-                                            '{}'.format(self.current_job))
-        e=open(os.path.join(location,'Basic_Info.csv'),'r')
-        basic=e.readlines()
-        e.close()
-        flag=False
-        #change the information in basic[2] and basic[3] to match the new values
-        if basic[2].split(sep='\n')[0]!=self.machine.text():
-            old=basic[2].split(sep='\n')[0].replace(' ','_')
-            cust=basic[1].split(sep='\n')[0].replace(' ','_')
-            file_name=basic[0].split(sep='\n')[0]+'.pdf'
-            flag=True
-            basic[2]=self.machine.text()
-            self.machine_text=basic[2]
-            self.machine_label.setText('Machine: {}'.format(self.machine_text))
-        if float(basic[3].split(sep=',')[0])!=float(self.tax_value.text())/100:
-            try:
-                tax_code,ok=QInputDialog.getText(self,'Update Tax Code','Tax Code: ',
-                                                 QLineEdit.Normal,
-                                     basic[3].split(sep=',')[1].split(sep='\n')[0])
-            except:
-                tax_code,ok=QInputDialog.getText(self,'Update Tax Code','Tax Code: ',
-                                                 QLineEdit.Normal,"")
-            basic[3]='{},{}'.format(float(self.tax_value.text())/100,tax_code)
-            
-        self.tax=float(self.tax_value.text())/100
-        
-        f=open(os.path.join(location,'Basic_Info.csv'),'w')
-        for i in range(len(basic)):
-            if '\n' not in basic[i]:
-                f.write('{}\n'.format(basic[i]))
-            else:
-                f.write('{}'.format(basic[i]))
-        f.close()
-        
+    def update_basic_values(self,value):
+        self.tax=value
         #change the percent shown in the total value
         self.totals_table.tableWidget.setItem(5,0,
                                               QTableWidgetItem('Tax: {:.2f}%'
@@ -962,29 +908,11 @@ class Invoice(QMainWindow):
         self.calculate_totals()
         self.save_invoice()
         time.sleep(3)
-        if flag:
-        #depending on if the machine has been updated, get rid of the previous
-        #version of the file and start change it to the new location
-            location=os.path.join(os.path.expanduser('~/Desktop'),
-                                  'BEI_Invoices')
-            old_location_cust_=os.path.join(os.path.join(location,'Customer'),
-                                           cust)
-            old_location_cust=os.path.join(old_location_cust_,old)
-            old_final_cust=os.path.join(old_location_cust,file_name)
-            
-            old_location_comp_=os.path.join(os.path.join(location,'Company'),
-                                           cust)
-            old_location_comp=os.path.join(old_location_comp_,old)
-            len_old=len(os.listdir(old_location_comp))
-            old_final_comp=os.path.join(old_location_comp,file_name)
-            
-            if len_old==1:
-                shutil.rmtree(old_location_comp)
-                shutil.rmtree(old_location_cust)
-            else:
-                os.unlink(old_final_comp)
-                os.unlink(old_final_cust)
-                
+        try:
+            self.update.move_files()
+        except:
+            print('Error 502- Basic Info Move File Error')
+
     def view_windows(self):
         '''Used to re-initialize the totals and main window'''
         self.save_invoice()
@@ -1095,6 +1023,10 @@ class Invoice(QMainWindow):
    
     def billing_envelopes(self):
         self.billing_=CE(self.base_directory)
+        
+    def customer_change(self):
+        #first get the basic information 
+        pass
             
 if __name__=="__main__":
     app=QApplication(sys.argv)
