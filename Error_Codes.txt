@@ -1,7 +1,16 @@
 100s- reserved for opening invoices
 200s- reserved for saving invoices, csv files
+	201- Save part information error
+	202- Totals saver error
+	203- Comments saver error
+	204- Labor saver error
+	205- PDF Closing Error
+	206- Envelope writing error
 300s- reserved for saving pdf files
 400s- reserved for recalculating totals 
+	401- Labor total error
+	402- Parts total error
+	403- Totals data placement error
 500s- reserved for all other failures
 	501- Basic Info Change Error
 	502- Baisc Info File Move Error
@@ -12,3 +21,4 @@
 	507- More job number error
 	508- Date Changing File Error
 	509- Labor Breakdown Error
+	510- Labor Rate Change Error

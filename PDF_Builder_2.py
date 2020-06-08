@@ -1,7 +1,5 @@
 #updated PDF builder to reduce down to one class instead of two
-import os, sys,subprocess,shutil
-from pathlib import Path
-from PyQt5.QtWidgets import QMessageBox,QWidget
+import os, subprocess,shutil
 class PDF_Builder():
     '''Build a PDF table of the data in the tables provided
     Steps this function does:

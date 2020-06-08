@@ -2,6 +2,7 @@
 import os,shutil,subprocess
 class Enevelope_Writer():
     def __init__(self,base_directory,job_number):
+        self.base_directory=base_directory
         save=os.path.join(base_directory,'Saved_Invoices')
         job=os.path.join(os.path.join(save,job_number),'Basic_Info.csv')
         self.job=os.path.join(save,job_number)
@@ -12,16 +13,14 @@ class Enevelope_Writer():
     def generate_latex(self):
         replace=['@','#','$','%','&']
         customer=self.data[1].split('\n')[0]
+        self.customer=customer.replace(' ','_')
         address1=self.data[4].split('\n')[0]
         address2=self.data[5].split('\n')[0].replace(',',' ')
-        tex_location=os.path.join(self.job,'envelope.tex')
+        tex_name=self.customer+'.tex'
+        tex_location=os.path.join(self.job,tex_name)
         file=open(tex_location,'w')
-        header_return=[r'\documentclass{letter}',r'\usepackage{geometry}',
-                r'\geometry{paperheight=220mm,paperwidth=110mm}',
-                r'\usepackage{graphics}',r'\usepackage{envlab}',
-                r'\SetEnvelope{220mm}{110mm}',
-                r'\setlength{\ToAddressTopMargin}{20mm}',
-                r'\setlength{\ToAddressLeftMargin}{20mm}',
+        header_return=[r'\documentclass{letter}',
+                r'\usepackage{graphics}',r'\usepackage[businessenvelope]{envlab}',
                 r'\makelabels',r'\begin{document}',
                 r'\startlabels',
                 r'\mlabel{Burl Equipment Inc\\ PO Box 347\\ Cimarron KS 67835}{']
@@ -38,15 +37,15 @@ class Enevelope_Writer():
         startupinfo = subprocess.STARTUPINFO()
         startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
         subprocess.call(['pdflatex',tex_location],startupinfo=startupinfo)
-        os.unlink(os.path.join(os.getcwd(),'envelope.aux'))
-        os.unlink(os.path.join(os.getcwd(),'envelope.log'))
-        
-        shutil.move(os.path.join(os.getcwd(),'envelope.pdf'),
-                    os.path.join(self.job,'envelope.pdf'))
-        os.unlink(os.path.join(self.job,'envelope.tex'))
+        os.unlink(os.path.join(os.getcwd(),self.customer+'.aux'))
+        os.unlink(os.path.join(os.getcwd(),self.customer+'.log'))
+        new_loc=os.path.join(os.path.join(self.base_directory,
+                          'Customer_Envelopes'),self.customer+'.pdf')
+        shutil.move(os.path.join(os.getcwd(),self.customer+'.pdf'),new_loc)
+        os.unlink(os.path.join(self.job,tex_name))
         
     def print_pdf(self):
-        loc=os.path.join(self.job,'envelope.pdf')
+        loc=os.path.join(self.job,self.customer+'.pdf')
         os.startfile(loc,'print')
         
 if __name__=="__main__":

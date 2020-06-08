@@ -16,6 +16,7 @@ from enevelope_writer import Enevelope_Writer as EWriter
 from Envelope_printer import Envelope_Printer as EP
 from Check_Envelopes import Check_Envelopes as CE
 from Basic_Update import Update
+from Save_Invoice import Save_Invoice
 #prefined imports
 import subprocess,psutil
 import sys,os,time
@@ -63,7 +64,7 @@ class Invoice(QMainWindow):
         super().__init__()
         self.size_policy=QSizePolicy.Expanding
         self.font=QFont()
-        self.font.setPointSize(12)
+        self.font.setPointSize(14)
         self.showMaximized()
         self.setWindowIcon(QIcon('BEI_Logo.png'))
 #        backimage=QImage('BEI_Logo.png')
@@ -223,16 +224,10 @@ class Invoice(QMainWindow):
             self.totals_table.close()
             self.save_invoice()
             self.new_window=New_Invoice(12,self.base_directory)
-#            self.new_window.basic_information()
             self.new_window.start.clicked.connect(self.job_num_insertion)
-#            self.new_window.customer_address_line_2.returnPressed.connect(self.new_window.information_)
-#            self.new_window.customer_address_line_2.returnPressed.connect(self.job_num_insertion)
         except:
             self.new_window=New_Invoice(12,self.base_directory)
-#            self.new_window.basic_information()
             self.new_window.start.clicked.connect(self.job_num_insertion)
-#            self.new_window.customer_address_line_2.returnPressed.connect(self.new_window.information_)
-#            self.new_window.customer_address_line_2.returnPressed.connect(self.job_num_insertion)
             
     def job_num_insertion(self):
         '''Call the table with the job number given in the new invoice
@@ -315,12 +310,12 @@ class Invoice(QMainWindow):
         self.open.setFont(self.font)
         self.open.setSizePolicy(self.size_policy,self.size_policy)
         self.open.clicked.connect(self.reader)
+        self.open.setShortcut('Alt+O')
         
         self.job_to_open=QLineEdit(self)
         self.job_to_open.setFont(self.font)
         self.job_to_open.setSizePolicy(self.size_policy,self.size_policy)
         self.job_to_open.setCompleter(QCompleter(saved_jobs))
-#        self.job_to_open.returnPressed.connect(self.reader)
         
         layout=QVBoxLayout()
         layout.addWidget(self.job_to_open)
@@ -453,81 +448,43 @@ class Invoice(QMainWindow):
         if self.current_job==str:
             pass
         else:
-            location=os.path.join(os.path.join(self.base_directory,
-                                       'Saved_Invoices'),self.current_job)
-            parts_file=os.path.join(location,'Parts.csv')
-            #first read and write the parts information
-            f=open(parts_file,'w')
-            row=[]
-            for i in range(100):
-                try:
-                    for j in range(8):
-                        if j==0:
-                            if self.parts.parts_table.tableWidget.item(i,j).text()!='*':
-                                val=float(self.parts.parts_table.tableWidget.item(i,
-                                                                          j).text())
-                            elif self.parts.parts_table.tableWidget.item(i,j).text()=='*':
-                                val=self.parts.parts_table.tableWidget.item(i,j).text()
-                            row.append(val)
-                        else:
-                            try:
-                                val=self.parts.parts_table.tableWidget.item(i,
-                                                                        j).text()
-                                row.append(val)
-                            except:
-                                row.append('')
-                    if '\n' in row[-1]:
-                        row[-1]=row[-1].split(sep='\n')[0]
-                    row[2]=row[2].replace(',','.')
-                    f.write('{},{},{},{},{},{},{},{}\n'.format(*row))
-                    row=[]
-                except:
-                    break
-            f.close()
+            invoice_saver=Save_Invoice(self.base_directory,self.current_job)
+            #save the parts table information
+            try:
+                invoice_saver.parts_saving(self.parts)
+            except:
+                print('Error 201- Save part information error')
             #save the total table
-            total_location=os.path.join(location,'Totals.csv')
-            h=open(total_location,'w')
-            t_row=[self.parts_,self.labor_,self.supplies,self.freight_,
+            try:
+                t_row=[self.parts_,self.labor_,self.supplies,self.freight_,
                    self.subtotal,self.taxed,self.totals]
-            for i in t_row:
-                try:
-                    float(i)
-                    h.write('{:.2f}\n'.format(i))
-                except:
-                    h.write('0')
-            h.close()
+                invoice_saver.total_table(t_row)
+            except:
+                print('Error 202- Totals saver error')
             #save the comments
-            comments_location=os.path.join(location,'Comments.csv')
-            v=open(comments_location,'w')
-            v.write(self.comments.toPlainText())
-            v.close()
+            try:
+                invoice_saver.comments(self.comments)
+            except:
+                print('Error 203- Comments saver error')
             #finally save the labor information
             #get the number of techs showing
-            count=self.labor.counts
-            
-            for l in range(count):
-                labor_location=os.path.join(location,'tech{}.csv'.format(l))
-                o=open(labor_location,'w')
-                #get the data from the labor class
-                tech_labor=self.labor.read_data_out(l)
-                for k in range(len(tech_labor)):
-                    if '\n' in list(tech_labor[k][-1]):
-                        tech_labor[k][-1]=float(tech_labor[k][-1])
-                    o.write('{},{},{},{},{},{},{},{}\n'.format(*tech_labor[k]))
-                o.close()
+            try:
+                invoice_saver.labor_saving(self.labor)
+            except:
+                print('Error 204- Labor saver error')
                 
         self.statusbar.showMessage('Invoice {} saved'.format(self.current_job),
-                           5000)      
-        envelop_writer=EWriter(self.base_directory,self.current_job)
-        envelop_writer.generate_latex()
+                           5000)    
+        try:
+            envelop_writer=EWriter(self.base_directory,self.current_job)
+            envelop_writer.generate_latex()
+        except:
+            print('Error 206- Envelope writing error')
         
-        acrobat='Acrobat.exe' in (p.name() for p in psutil.process_iter())
-        reader='AcroRd32.exe' in (p.name() for p in psutil.process_iter())
-        if acrobat:
-            lis=['taskkill','/F','/IM','Acrobat.exe','/T']
-            subprocess.call(lis)
-        if reader:
-            os.system('taskkill /F /IM "AcroRd32.exe" /T')
+        try:
+            invoice_saver.pdf_shut()
+        except:
+            print('Error 205- PDF Closing Error')
         
         if printing==False:
             comp_cust=Saver(self,self.base_directory,self.current_job)
@@ -539,7 +496,6 @@ class Invoice(QMainWindow):
             QMessageBox.information(self,'Save Failure',
                                         'Closing PDF and trying again',
                                         QMessageBox.Ok)
-#            self.save_invoice()
         
     def add_tech(self):
         '''Adding a technician to the company:
@@ -668,8 +624,11 @@ class Invoice(QMainWindow):
     def labor_rates(self):
         '''Change the labor rates
         '''
-        self.changes=Labor_Rates(self.base_directory,self.font,self.size_policy)
-        self.changes.show()
+        try:
+            self.changes=Labor_Rates(self.base_directory,self.font,self.size_policy)
+            self.changes.show()
+        except:
+            print('Error 510- Labor Rate Change Error')
     
     def update_parts_total(self):
         self.parts_calculator()
@@ -684,9 +643,6 @@ class Invoice(QMainWindow):
     def parts_calculator(self):
         self.parts_=0
         self.freight_=0
-#        self.parts.parts_sumation()
-#        self.parts_=self.parts.parts_total
-#        self.freight_=self.parts.freight_total+1
         
         for i in range(100):
             try:
@@ -713,19 +669,27 @@ class Invoice(QMainWindow):
     def calculate_totals(self):
         '''Calculate the totals for the totals table and display it
         '''
-        self.update_labor()
-#        self.parts.parts_sumation()
-        self.update_parts_total()
-        self.subtotal=self.labor_supplies_+self.total_parts_
-        self.totals_table.tableWidget.setItem(
-                4,1,QTableWidgetItem('${:,.2f}'.format(self.subtotal)))
-        self.taxed=self.tax*self.subtotal
-        self.totals_table.tableWidget.setItem(
-                5,1,QTableWidgetItem('${:,.2f}'.format(self.taxed)))
-        self.totals=self.subtotal+self.taxed+self.finance-self.partial
-        self.totals_table.tableWidget.setItem(
-                6,1,QTableWidgetItem('${:,.2f}'.format(
-                        self.totals)))  
+        try:
+            self.update_labor()
+        except:
+            print('Error 401 - Recalculate labor total')
+        try:
+            self.update_parts_total()
+        except:
+            print('Error 402- Recalculate parts total')
+        try:
+            self.subtotal=self.labor_supplies_+self.total_parts_
+            self.totals_table.tableWidget.setItem(
+                    4,1,QTableWidgetItem('${:,.2f}'.format(self.subtotal)))
+            self.taxed=self.tax*self.subtotal
+            self.totals_table.tableWidget.setItem(
+                    5,1,QTableWidgetItem('${:,.2f}'.format(self.taxed)))
+            self.totals=self.subtotal+self.taxed+self.finance-self.partial
+            self.totals_table.tableWidget.setItem(
+                    6,1,QTableWidgetItem('${:,.2f}'.format(
+                            self.totals)))  
+        except:
+            print('Error 403- Total data placement error')
         
     def print_invoice(self):
         '''
@@ -733,7 +697,6 @@ class Invoice(QMainWindow):
         '''
         #make sure the invoice is saved
         self.save_invoice(printing=True)
-        self.printed_list[self.current_job]=[self.customer,self.machine_text]
         try:
             #error will be handled internal to pdf2
             pdf2.PDF_Builder(self.current_job,
@@ -869,6 +832,7 @@ class Invoice(QMainWindow):
             f.close()
         except:
             print('Error 504- Partial Payment Error')
+            
     def finance_charges(self):
         self.charg=Finance_Charges(self.font,self.size_policy)
         self.charg.add.clicked.connect(self.fin_process)
@@ -993,21 +957,22 @@ class Invoice(QMainWindow):
         #navigate to the envelope folder
         loc=os.path.join(os.path.join(
                 self.base_directory,'Customer_Envelopes'),
-                self.envelope_date+'.txt')
+                self.envelope_date+'.env')
         f=open(loc,'r')
-        data=f.readlines()
+        data=f.readline()
         f.close()
-        job_numbers=[]
-        for i in data:
-            job_numbers.append(i.split()[1])
-        QMessageBox.information(self,'Envelope Printing',
-    'Load {} invoices into printer before clicking OK'.format(len(job_numbers))
+        cust=data.split(sep=' ')
+        cust.remove('')
+        
+        reply=QMessageBox.information(self,'Envelope Printing',
+    'Load {} invoices into printer before clicking OK'.format(len(cust))
                                     ,QMessageBox.Ok)
         base=os.path.join(self.base_directory,'Saved_Invoices')
-        for i in range(len(job_numbers)):
-            enve_loc=os.path.join(os.path.join(base,job_numbers[i]),
-                                  'envelope.pdf')
-            os.startfile(enve_loc,'print')
+        if reply==QMessageBox.Ok:
+            for i in range(len(cust)):
+                enve_loc=os.path.join(os.path.join(base,'Customer_Envelopes',
+                                      cust[i]+'.pdf'))
+                os.startfile(enve_loc,'print')
             
     def envelop_write1(self):
         #get the job number to print
@@ -1016,10 +981,11 @@ class Invoice(QMainWindow):
         if num!='' and ok:
            writer=EWriter(self.base_directory,num)
            writer.generate_latex()
-           QMessageBox.information(self,'Envelope Printing',
-               'Load 1 invoices into printer before clicking OK',
+           reply=QMessageBox.information(self,'Envelope Printing',
+               'Load 1 envelope into printer before clicking OK',
                QMessageBox.Ok)
-           writer.print_pdf()
+           if reply==QMessageBox.Ok:
+               writer.print_pdf()
    
     def billing_envelopes(self):
         self.billing_=CE(self.base_directory)

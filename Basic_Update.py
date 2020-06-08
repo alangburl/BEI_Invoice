@@ -1,7 +1,8 @@
 #a class to update basic invoice values
 from PyQt5.QtWidgets import (QWidget,QLineEdit,QPushButton,QGridLayout,QLabel,
                              QInputDialog)
-from PyQt5.QtCore import QIcon,pyqtSignal
+from PyQt5.QtCore import pyqtSignal
+from PyQt5.QtGui import QIcon
 import os,shutil
 
 class Update(QWidget):

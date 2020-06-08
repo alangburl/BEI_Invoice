@@ -18,26 +18,26 @@ class Envelope_Printer():
         file.close()
         #then read the file, then check and see if the customer is 
         #already in the list for this month
-        dire=os.path.join(dire,date+'.txt')
+        dire=os.path.join(dire,date+'.env')
+        
         try:
             file2=open(dire,'r')
-            data=file2.readlines()
+            data=file2.readline()
             file2.close()
-
-            for i in range(len(data)):
-                if self.customer in data[i].split()[0]:
-                    data[i]=data[i].replace('\n','')
-                    data[i]+=' {}\n'.format(self.current_job)
-                else:
-                    data.append('{}   {}\n'.format(self.customer,self.current_job))
             
+            cust=data.split(sep=' ')
+            if self.customer not in cust:
+                cust.append(self.customer)
+            
+            cust.remove('')
             file2=open(dire,'w')
-            for j in data:
-                file2.write(j)
+            for j in cust:
+                file2.write(j+' ')
             file2.close()
+            
         except:
             file2=open(dire,'w')
-            file2.write('{}   {}\n'.format(self.customer,self.current_job))
+            file2.write('{} '.format(self.customer))
         #close the envelopes file and wait for the next go around
         file2.close()
         
