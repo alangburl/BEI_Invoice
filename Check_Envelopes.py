@@ -1,15 +1,13 @@
-
 import sys,os,subprocess,shutil
 from PyQt5.QtWidgets import (QApplication, QPushButton,QWidget,QGridLayout,
                              QSizePolicy,QLineEdit,QCompleter,QLabel,
-                             QComboBox)
+                             QInputDialog)
 from PyQt5.QtGui import (QFont,QIcon)
 from PyQt5.QtGui import QImage, QPalette, QBrush
 class Check_Envelopes(QWidget):
     def __init__(self,base_directory):
         super().__init__()
         base_path=os.path.join(base_directory,'Check_Addresses')
-        
         if 'Check_Addresses' not in os.listdir(base_directory):
             os.mkdir(base_path)
         self.base_path=base_path
@@ -36,19 +34,15 @@ class Check_Envelopes(QWidget):
                 self.names2.append(self.data[i].split(sep=',')[0].replace('_',' '))
         except:
             self.data=[]
-#            
-        self.geometry()
+            
+        text,ok=QInputDialog.getItem(self,'Envelope Size','Size',['Business','Personal'])
+        if ok==True:
+            self.type=text
+            self.geometry()
+        else:
+            self.close()
             
     def geometry(self):
-        type_label=QLabel('Envelope Size',self)
-        type_label.setSizePolicy(self.size_policy,self.size_policy)
-        type_label.setFont(self.font)
-                
-        self.envelop_type=QComboBox(self)
-        self.envelop_type.setSizePolicy(self.size_policy,self.size_policy)
-        self.envelop_type.setFont(self.font)
-        self.envelop_type.addItems(['Business','Personal'])
-        
         check_label=QLabel('Check wrote to:',self)
         check_label.setFont(self.font)
         check_label.setSizePolicy(self.size_policy,self.size_policy)
@@ -86,8 +80,6 @@ class Check_Envelopes(QWidget):
         process.clicked.connect(self.printer)
         
         layout=QGridLayout(self)
-        layout.addWidget(type_label,0,0)
-        layout.addWidget(self.envelop_type,0,1)
         layout.addWidget(check_label,1,0)
         layout.addWidget(self.customer_name,1,1)
         layout.addWidget(address1_label,2,0)
@@ -101,7 +93,6 @@ class Check_Envelopes(QWidget):
     def fill_information(self):
         #get the name
         self.name=self.customer_name.text().replace(' ','_')
-        self.type=self.envelop_type.currentText()
         line=0
         if self.name in self.names:
             for i in range(len(self.names)):
