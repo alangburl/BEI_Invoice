@@ -165,7 +165,8 @@ class Check_Envelopes(QWidget):
         file=open(tex_location,'w')
         header_return=[r'\documentclass{letter}',
                 r'\usepackage{graphics}',
-                r'\usepackage[envelope]{envlab}'.replace('envelope',self.type.lower()),
+                r'\usepackage[envelope]{envlab}'.replace('envelope',
+                             self.type.lower()+'envelope'),
                 r'\makelabels',r'\begin{document}',
                 r'\startlabels',
                 r'\mlabel{Burl Equipment Inc\\ PO Box 347\\ Cimarron KS 67835}{']
