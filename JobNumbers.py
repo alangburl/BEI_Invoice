@@ -104,7 +104,7 @@ class Job_Numbers(QMainWindow):
         self.th.start()
         
     def initial_numbers(self):
-        first_number=(10500)
+        first_number=(10562)
         
         self.z=open(self.loca,'w')
         number=first_number
