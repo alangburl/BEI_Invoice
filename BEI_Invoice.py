@@ -15,6 +15,7 @@ from edit_customer_info import Edit_Customer_Information as EDI
 from enevelope_writer import Enevelope_Writer as EWriter
 from Envelope_printer import Envelope_Printer as EP
 from Check_Envelopes import Check_Envelopes as CE
+import Version_Control as VC
 #prefined imports
 import subprocess,psutil
 import sys,os,time
@@ -69,6 +70,14 @@ class Invoice(QMainWindow):
         self.setWindowTitle('Burl Equipment Inc. Invoices Beta')
         self.tray=QSystemTrayIcon(self)
         self.tray.setIcon(QIcon('BEI_Logo.png'))
+        
+        #check to see if the program is up to date
+        checker,new,current=VC.check(self.base_directory)
+        if checker:
+            QMessageBox.information(self,'Software Version',
+            'Your software needs updated from version {} to version {}. Run BEI_Updater'.format(current,new),
+            QMessageBox.Ok)
+        
         self.show()
         self.menu_bar()
         self.statusbar=QStatusBar()

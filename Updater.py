@@ -21,22 +21,46 @@ class Launcher():
             time.sleep(2)
         except:
             False
-        self.file_pull()
-        self.recreate_exe()
-        self.copy_picture()
             
-#        except:
-#            print('Update failed')
+        self.base_directory=os.path.join(os.environ['USERPROFILE'],
+                                         'BEI_Invoices')
+        if 'Log' not in os.listdir(self.base_directory):
+            os.mkdir(os.path.join(self.base_directory,'Log'))
+            old=os.path.join(os.path.join(self.base_directory,
+                                          'Log'),'current.ver')
+            f=open(old,'w')
+            f.write('1.0.001')
+            f.close()
+            f=open('new.ver','w')
+            f.write('0.0.010')
+            f.close()
+        try:
+            new,old=self.file_pull()
+            self.recreate_exe()
+            self.copy_picture()
+            print('Successfully updated from version {} to version {}'.format(old, new))
+        except:
+            print('Update failed')
         time.sleep(2)
         
     def file_pull(self):
         startupinfo = subprocess.STARTUPINFO()
         startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
         subprocess.call(['git','pull'])
+
+        old=os.path.join(self.base_directory,'Log')
+        old=os.path.join(old,'current.ver')
+        
+        f=open('new.ver','r')
+        new=f.readlines()[0]
+        f.close()
+        
+        f=open(old,'w')
+        f.write(new)
+        f.close()
+        return new, old
         
     def recreate_exe(self):
-        startupinfo = subprocess.STARTUPINFO()
-        startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
         subprocess.call(['pyinstaller','BEI_Invoice.py',
                          '--windowed','--noconfirm'])     
         
@@ -46,9 +70,7 @@ class Launcher():
         
         dest=os.path.join(os.path.join(dire,'dist'),'BEI_Invoice')
         for i in copy:
-            shutil.copy2(i,os.path.join(dest))
-        print('Update successful')
-    
+            shutil.copy2(i,os.path.join(dest))    
     
 if __name__=="__main__":
     Launcher()
