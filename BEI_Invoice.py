@@ -70,7 +70,8 @@ class Invoice(QMainWindow):
         self.setWindowTitle('Burl Equipment Inc. Invoices Beta')
         self.tray=QSystemTrayIcon(self)
         self.tray.setIcon(QIcon('BEI_Logo.png'))
-        
+        self.base_directory=str(Path(
+                os.path.join(os.environ['USERPROFILE'],'BEI_Invoices')))
         #check to see if the program is up to date
         checker,new,current=VC.check(self.base_directory)
         if checker:
@@ -84,8 +85,6 @@ class Invoice(QMainWindow):
         self.setStatusBar(self.statusbar)
         #this is the first time start up section, should only run the very 
         #first time
-        self.base_directory=str(Path(
-                os.path.join(os.environ['USERPROFILE'],'BEI_Invoices')))
         base_entries=os.listdir(os.environ['USERPROFILE'])
         if 'BEI_Invoices' not in base_entries:
             initi.First_Run(self.base_directory)
