@@ -1021,7 +1021,7 @@ class Invoice(QMainWindow):
         QMessageBox.information(self,'Restart Required',
                                 'Run BEI_Updater and Restart program',
                                 QMessageBox.Ok)
-        self.close()
+#        self.close()
         
     def change_address(self):
         self.edi=EDI(self.font,self.size_policy,self.base_directory)
