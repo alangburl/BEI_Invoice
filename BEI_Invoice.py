@@ -453,14 +453,18 @@ class Invoice(QMainWindow):
             try:
                 invoice_saver.parts_saving(self.parts)
             except:
-                print('Error 201- Save part information error')
+                if not self.recent_open:
+                    self.recent_invoices()
+                self.notes.append('Error 201- Save part information error')
             #save the total table
             try:
                 t_row=[self.parts_,self.labor_,self.supplies,self.freight_,
                    self.subtotal,self.taxed,self.totals]
                 invoice_saver.total_table(t_row)
             except:
-                print('Error 202- Totals saver error')
+                if not self.recent_open:
+                    self.recent_invoices()
+                self.notes.append('Error 202- Totals saver error')
             #save the comments
             try:
                 invoice_saver.comments(self.comments)
