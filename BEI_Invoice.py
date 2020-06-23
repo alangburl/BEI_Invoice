@@ -72,12 +72,6 @@ class Invoice(QMainWindow):
         self.tray.setIcon(QIcon('BEI_Logo.png'))
         self.base_directory=str(Path(
                 os.path.join(os.environ['USERPROFILE'],'BEI_Invoices')))
-        #check to see if the program is up to date
-        checker,new,current=VC.check(self.base_directory)
-        if checker:
-            QMessageBox.information(self,'Software Version',
-            'Your software needs updated from version {} to version {}. Run BEI_Updater'.format(current,new),
-            QMessageBox.Ok)
         
         self.show()
         self.menu_bar()
@@ -1007,6 +1001,12 @@ class Invoice(QMainWindow):
                                        'Do you want to close the application?',
                                        QMessageBox.Yes| QMessageBox.No, 
                                        QMessageBox.No)
+                        #check to see if the program is up to date
+                checker,new,current=VC.check(self.base_directory)
+                if checker:
+                    QMessageBox.information(self,'Software Version',
+                    'Your software needs updated from version {} to version {}. Run BEI_Updater'.format(current,new),
+                    QMessageBox.Ok)
                 
                 if reply==QMessageBox.Yes:
                     event.accept()
@@ -1080,14 +1080,15 @@ class Invoice(QMainWindow):
         job_numbers=[]
         for i in data:
             job_numbers.append(i.split()[1])
-        QMessageBox.information(self,'Envelope Printing',
+        ok=QMessageBox.information(self,'Envelope Printing',
     'Load {} invoices into printer before clicking OK'.format(len(job_numbers))
                                     ,QMessageBox.Ok)
         base=os.path.join(self.base_directory,'Saved_Invoices')
-        for i in range(len(job_numbers)):
-            enve_loc=os.path.join(os.path.join(base,job_numbers[i]),
-                                  'envelope.pdf')
-            os.startfile(enve_loc,'print')
+        if ok==QMessageBox.Ok:
+            for i in range(len(job_numbers)):
+                enve_loc=os.path.join(os.path.join(base,job_numbers[i]),
+                                      'envelope.pdf')
+                os.startfile(enve_loc,'print')
             
     def envelop_write1(self):
         #get the job number to print

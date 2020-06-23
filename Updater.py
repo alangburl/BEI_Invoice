@@ -32,7 +32,7 @@ class Launcher():
             f.write('1.0.001')
             f.close()
             f=open('new.ver','w')
-            f.write('0.0.010')
+            f.write('1.0.010')
             f.close()
         try:
             new,old=self.file_pull()
@@ -55,10 +55,14 @@ class Launcher():
         new=f.readlines()[0]
         f.close()
         
+        f=open(old,'r')
+        older=f.readlines()[0]
+        f.close()
+        
         f=open(old,'w')
         f.write(new)
         f.close()
-        return new, old
+        return new, older
         
     def recreate_exe(self):
         subprocess.call(['pyinstaller','BEI_Invoice.py',
