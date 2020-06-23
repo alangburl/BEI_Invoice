@@ -1097,7 +1097,7 @@ class Invoice(QMainWindow):
            writer=EWriter(self.base_directory,num)
            writer.generate_latex()
            QMessageBox.information(self,'Envelope Printing',
-               'Load 1 invoices into printer before clicking OK',
+               'Load 1 envelope into printer before clicking OK',
                QMessageBox.Ok)
            writer.print_pdf()
    

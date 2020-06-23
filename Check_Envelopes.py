@@ -85,6 +85,11 @@ class Check_Envelopes(QWidget):
         process.setSizePolicy(self.size_policy,self.size_policy)
         process.clicked.connect(self.printer)
         
+        pandc=QPushButton('Print and Close',self)
+        pandc.setFont(self.font)
+        pandc.setSizePolicy(self.size_policy,self.size_policy)
+        pandc.clicked.connect(self.print_close)
+        
         layout=QGridLayout(self)
         layout.addWidget(type_label,0,0)
         layout.addWidget(self.envelop_type,0,1)
@@ -94,7 +99,8 @@ class Check_Envelopes(QWidget):
         layout.addWidget(self.address_1,2,1)
         layout.addWidget(address2_label,3,0)
         layout.addWidget(self.address_2,3,1)
-        layout.addWidget(process,4,0,1,2)
+        layout.addWidget(process,4,0)
+        layout.addWidget(pandc,4,1)
         self.setLayout(layout)
         self.show()
         
@@ -202,9 +208,14 @@ class Check_Envelopes(QWidget):
         os.unlink(os.path.join(self.base_path,self.name.replace(' ','_')+'.tex'))
         
         self.print_pdf()
+        
     def print_pdf(self):
         loc=os.path.join(self.base_path,self.name.replace(' ','_')+'.pdf')
         os.startfile(loc,'print')
+    
+    def print_close(self):
+        self.print_pdf()
+        self.close()
         
 if __name__=='__main__':
     app=QApplication(sys.argv)
