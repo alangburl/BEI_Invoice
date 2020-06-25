@@ -2,6 +2,8 @@
 import os, sys,subprocess,shutil
 from pathlib import Path
 from PyQt5.QtWidgets import QMessageBox,QWidget
+
+from Printer import Printer
 class PDF_Builder():
     '''Build a PDF table of the data in the tables provided
     Steps this function does:
@@ -281,4 +283,4 @@ class PDF_Builder():
     def print_tex(self):
         '''Actually print the document
         '''
-        os.startfile(self.new_loc,'print')
+        printed=Printer(self.new_loc)

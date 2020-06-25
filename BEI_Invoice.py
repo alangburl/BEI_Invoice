@@ -115,10 +115,22 @@ class Invoice(QMainWindow):
 #        self.actionImport=QAction('&Import Old Job',self)
 #        self.actionImport.triggered.connect(self.old_job)
 #        self.actionImport.setShortcut('Ctrl+I')
-        self.actionPrint=QAction('&Print',self)
+        self.printMainMenu=QMenu('Print',self)
+        
+        self.actionPrint=QAction('&Print All',self)
         self.actionPrint.setShortcut('Ctrl+P')
         self.actionPrint.setDisabled(True)
         self.actionPrint.triggered.connect(self.print_invoice)
+        
+        self.actionPrintCust=QAction('&Print Customer',self)
+        self.actionPrintCust.setDisabled(True)
+        self.actionPrintCust.triggered.connect(self.print_customer)
+        
+        self.actionPrintCom=QAction('&Print Company',self)
+        self.actionPrintCom.setDisabled(True)
+        self.actionPrintCom.triggered.connect(self.print_company)
+        self.printMainMenu.addActions([self.actionPrint,self.actionPrintCom,
+                                      self.actionPrintCust])
         
         self.printMenu=QMenu('Print Envelopes',self)
         self.actionEnvelope=QAction('&Print All Billed Customer Envelopes',self)
@@ -141,7 +153,8 @@ class Invoice(QMainWindow):
         self.actionQuit.triggered.connect(self.closing)
         self.actionQuit.setShortcut('Alt+F4')
         self.menuFile.addActions([self.actionNew, self.actionOpen,
-                                  self.actionSave,self.actionPrint])
+                                  self.actionSave])
+        self.menuFile.addMenu(self.printMainMenu)
         self.menuFile.addMenu(self.printMenu)
         self.menuFile.addAction(self.actionQuit)
         
@@ -341,6 +354,8 @@ class Invoice(QMainWindow):
         '''
         self.start_flag=True
         self.actionPrint.setEnabled(True)
+        self.actionPrintCust.setEnabled(True)
+        self.actionPrintCom.setEnabled(True)
         
         self.actionSave.setEnabled(True)
         self.actionViewLaborBreakdown.setEnabled(True)
@@ -752,6 +767,16 @@ class Invoice(QMainWindow):
         self.actionEnvelope.setEnabled(True)
         self.actionEnvelope1.setEnabled(True)
         
+    def print_customer(self):
+        self.save_invoice(printing=True)
+        pdf2.PDF_Builder(self.current_job,
+                             self.base_directory,'Customer').print_tex()
+    
+    def print_company(self):
+        self.save_invoice(printing=True)
+        pdf2.PDF_Builder(self.current_job,
+                                 self.base_directory,'Company').print_tex()
+    
     def closing(self):
 #        self.save_invoice()
         self.close()
@@ -1073,21 +1098,21 @@ class Invoice(QMainWindow):
         #navigate to the envelope folder
         loc=os.path.join(os.path.join(
                 self.base_directory,'Customer_Envelopes'),
-                self.envelope_date+'.txt')
+                self.envelope_date+'.env')
         f=open(loc,'r')
-        data=f.readlines()
+        data=f.readline()
         f.close()
-        job_numbers=[]
-        for i in data:
-            job_numbers.append(i.split()[1])
-        ok=QMessageBox.information(self,'Envelope Printing',
-    'Load {} invoices into printer before clicking OK'.format(len(job_numbers))
+        cust=data.split(sep=' ')
+        cust.remove('')
+        
+        reply=QMessageBox.information(self,'Envelope Printing',
+    'Load {} invoices into printer before clicking OK'.format(len(cust))
                                     ,QMessageBox.Ok)
-        base=os.path.join(self.base_directory,'Saved_Invoices')
-        if ok==QMessageBox.Ok:
-            for i in range(len(job_numbers)):
-                enve_loc=os.path.join(os.path.join(base,job_numbers[i]),
-                                      'envelope.pdf')
+        base=self.base_directory
+        if reply==QMessageBox.Ok:
+            for i in range(len(cust)):
+                enve_loc=os.path.join(os.path.join(base,'Customer_Envelopes',
+                                      cust[i]+'.pdf'))
                 os.startfile(enve_loc,'print')
             
     def envelop_write1(self):
