@@ -13,4 +13,3 @@ class Printer():
         win.SetPrinter(handle,level,attributes,0)
         win.GetPrinter(handle,level)['pDevMode'].Duplex
         api.ShellExecute(0,'print',file,'.','/manualstoprint',0)
-        return 0

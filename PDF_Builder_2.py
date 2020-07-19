@@ -283,4 +283,4 @@ class PDF_Builder():
     def print_tex(self):
         '''Actually print the document
         '''
-        printed=Printer(self.new_loc)
+        Printer(self.new_loc)
