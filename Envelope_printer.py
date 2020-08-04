@@ -19,7 +19,7 @@ class Envelope_Printer():
         #then read the file, then check and see if the customer is 
         #already in the list for this month
         dire=os.path.join(dire,date+'.env')
-                try:
+        try:
             file2=open(dire,'r')
             data=file2.readline()
             file2.close()
