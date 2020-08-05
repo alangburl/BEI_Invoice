@@ -16,6 +16,7 @@ from enevelope_writer import Enevelope_Writer as EWriter
 from Envelope_printer import Envelope_Printer as EP
 from Check_Envelopes import Check_Envelopes as CE
 import Version_Control as VC
+from Change_Customer import Change_Customer as CC
 #prefined imports
 import subprocess,psutil
 import sys,os,time
@@ -170,10 +171,16 @@ class Invoice(QMainWindow):
         self.actionChangeDate.triggered.connect(self.date_change)
         self.actionChangeCustomerAddress=QAction('&Change Customer Address',self)
         self.actionChangeCustomerAddress.triggered.connect(self.change_address)
+        
         self.actionBasicInfo=QAction('&Change Basic Information',self)
         self.actionBasicInfo.triggered.connect(self.change_basic_info)
+        self.actionChangeCustomer=QAction('&Change Customer Name',self)
+        self.actionChangeCustomer.triggered.connect(self.change_customer)
+        self.actionChangeCustomer.setDisabled(True)
         self.actionBasicInfo.setDisabled(True)
-        self.menuEdit_Change_In.addActions([self.actionBasicInfo])
+        self.menuEdit_Change_In.addActions([self.actionBasicInfo,
+                                            self.actionChangeCustomer])
+    
         self.menuEdit_Change_Sy.addActions([self.actionLaborRates,
                                             self.actionAddTechnician,
                                             self.actionChangeDate,
@@ -363,6 +370,8 @@ class Invoice(QMainWindow):
         self.actionViewAllWindows.setEnabled(True)
         self.actionViewCutomer.setEnabled(True)
         self.actionViewCompany.setEnabled(True)
+        self.actionChangeCustomer.setEnabled(True)
+        
         self.docked=QMdiSubWindow()
         self.docked.setWindowTitle('Invoice {}'.format(num))
         self.num=num
@@ -464,7 +473,7 @@ class Invoice(QMainWindow):
         self.current_job=job_number
         self.read_in_data()
         
-    def save_invoice(self,printing=False):
+    def save_invoice(self,printing=False,no_build=False):
         '''Save both the parts and labor tables
         '''
         if self.current_job==str:
@@ -534,22 +543,23 @@ class Invoice(QMainWindow):
                 o.close()
                 
         self.statusbar.showMessage('Invoice {} saved'.format(self.current_job),
-                           5000)      
-        envelop_writer=EWriter(self.base_directory,self.current_job)
-        envelop_writer.generate_latex()
-        
-        acrobat='Acrobat.exe' in (p.name() for p in psutil.process_iter())
-        reader='AcroRd32.exe' in (p.name() for p in psutil.process_iter())
-        if acrobat:
-            lis=['taskkill','/F','/IM','Acrobat.exe','/T']
-            subprocess.call(lis)
-        if reader:
-            os.system('taskkill /F /IM "AcroRd32.exe" /T')
-        
-        if printing==False:
-            comp_cust=Saver(self,self.base_directory,self.current_job)
-            comp_cust.out.connect(self.failure)
-            comp_cust.start()
+                           5000)  
+        if no_build==False:
+            envelop_writer=EWriter(self.base_directory,self.current_job)
+            envelop_writer.generate_latex()
+            
+            acrobat='Acrobat.exe' in (p.name() for p in psutil.process_iter())
+            reader='AcroRd32.exe' in (p.name() for p in psutil.process_iter())
+            if acrobat:
+                lis=['taskkill','/F','/IM','Acrobat.exe','/T']
+                subprocess.call(lis)
+            if reader:
+                os.system('taskkill /F /IM "AcroRd32.exe" /T')
+            
+            if printing==False:
+                comp_cust=Saver(self,self.base_directory,self.current_job)
+                comp_cust.out.connect(self.failure)
+                comp_cust.start()
         
     def failure(self,value):
         if value==1:
@@ -1129,6 +1139,16 @@ class Invoice(QMainWindow):
    
     def billing_envelopes(self):
         self.billing_=CE(self.base_directory)
+    
+    def change_customer(self):
+        customers=CC(self.base_directory,self.current_job).Customer()
+        
+        item,ok=QInputDialog.getItem(self,'New Customer','Listed Customers:'
+                                     ,customers,0,False)
+        if item and ok:
+            CC(self.base_directory,self.current_job).change_name(item)
+        self.save_invoice(no_build=True)
+        self.read_in_data()
             
 if __name__=="__main__":
     app=QApplication(sys.argv)
