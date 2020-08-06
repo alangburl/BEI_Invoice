@@ -1141,12 +1141,13 @@ class Invoice(QMainWindow):
         self.billing_=CE(self.base_directory)
     
     def change_customer(self):
-        customers=CC(self.base_directory,self.current_job).Customer()
+        changer=CC(self.base_directory,self.current_job)
+        customers=changer.Customer()
         
         item,ok=QInputDialog.getItem(self,'New Customer','Listed Customers:'
                                      ,customers,0,False)
         if item and ok:
-            CC(self.base_directory,self.current_job).change_name(item)
+            changer.change_name(item)
         self.save_invoice(no_build=True)
         self.read_in_data()
             
