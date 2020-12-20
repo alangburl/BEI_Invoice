@@ -23,8 +23,11 @@ class Check_Envelopes(QWidget):
         palette.setBrush(10,QBrush(backimage))
         self.setPalette(palette)
         self.setWindowTitle('Check Envelope Printer')
+        self.init()
+        self.geometry()
         
-        self.file=os.path.join(base_path,'addresss.txt')
+    def init(self):
+        self.file=os.path.join(self.base_path,'addresss.txt')
         self.names=[]
         self.names2=[]
         try:
@@ -36,8 +39,6 @@ class Check_Envelopes(QWidget):
                 self.names2.append(self.data[i].split(sep=',')[0].replace('_',' '))
         except:
             self.data=[]
-#            
-        self.geometry()
             
     def geometry(self):
         type_label=QLabel('Envelope Size',self)
@@ -90,6 +91,12 @@ class Check_Envelopes(QWidget):
         pandc.setSizePolicy(self.size_policy,self.size_policy)
         pandc.clicked.connect(self.print_close)
         
+        self.change_address=QPushButton('Change Address',self)
+        self.change_address.setFont(self.font)
+        self.change_address.setSizePolicy(self.size_policy,self.size_policy)
+        self.change_address.clicked.connect(self.changer)
+        self.change_address.setEnabled(False)
+        
         layout=QGridLayout(self)
         layout.addWidget(type_label,0,0)
         layout.addWidget(self.envelop_type,0,1)
@@ -101,11 +108,13 @@ class Check_Envelopes(QWidget):
         layout.addWidget(self.address_2,3,1)
         layout.addWidget(process,4,0)
         layout.addWidget(pandc,4,1)
+        layout.addWidget(self.change_address,5,0)
         self.setLayout(layout)
         self.show()
         
     def fill_information(self):
         #get the name
+        self.change_address.setEnabled(True)
         self.name=self.customer_name.text().replace(' ','_')
         self.type=self.envelop_type.currentText()
         line=0
@@ -113,19 +122,44 @@ class Check_Envelopes(QWidget):
             for i in range(len(self.names)):
                 if self.name in self.names[i]:
                     line=i
+                    self.line=line
             self.address_1.setText(self.data[line].split(sep=',')[1].replace('.',','))
             self.address_2.setText(self.data[line].split(sep=',')[2].replace('.',','))
         else:
             self.new_payment()
+            
+    def changer(self):
+        self.new_payment(True)
         
-    def new_payment(self):
+    def update_customer(self):
+        self.line1=self.line_1.text().replace(',','.')
+        self.line2=self.line_2.text().replace(',','.')
+        self.new_.close()
+        self.address_1.setText(self.line_1.text())
+        self.address_2.setText(self.line_2.text())
+        
+        self.data.pop(self.line)
+
+        f=open(self.file,'w')
+        for i in range(len(self.data)):
+            f.write(self.data[i])
+        f.write('{},{},{}\n'.format(self.name,self.line1,self.line2))
+        f.close()
+        self.init()
+        
+    def new_payment(self, switch=False):
         self.new_=QWidget()
         self.new_.setWindowIcon(QIcon('BEI_Logo.png'))
         self.new_.setWindowTitle('New Check Intake')
         add=QPushButton('Add Check',self)
         add.setFont(self.font)
         add.setSizePolicy(self.size_policy,self.size_policy)
-        add.clicked.connect(self.new_customer)
+        if switch==False:
+            add.clicked.connect(self.new_customer)
+        if switch:
+            add.clicked.connect(self.update_customer)
+            add.setText('Update Check')
+            
         clo=QPushButton('Close',self)
         clo.setFont(self.font)
         clo.setSizePolicy(self.size_policy,self.size_policy)

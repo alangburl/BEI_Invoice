@@ -1,6 +1,5 @@
 #prefined imports
-import sys,os,shutil
-from pathlib import Path
+import os
 from PyQt5.QtWidgets import (QApplication, QPushButton,QWidget,QGridLayout,
                              QSizePolicy,QComboBox,QLineEdit,QTextEdit,
                              QMessageBox,QInputDialog,QMainWindow,QAction

@@ -17,8 +17,9 @@ class Parts_Tabs(QWidget):
     parts_total=0
     freight_total=0
     total=pyqtSignal(float)
-    def __init__(self,job_number):
+    def __init__(self,job_number,font):
         super().__init__()
+        self.font=font
         self.init()
         self.setWindowTitle('BEI Invoice Number {}'.format(job_number))
     def init(self):
@@ -32,7 +33,7 @@ class Parts_Tabs(QWidget):
     def parts(self):
         '''Widget for the parts tab
         '''
-        self.parts_table=Table(500,8)
+        self.parts_table=Table(500,8,self.font)
         self.parts_table.tableWidget.setHorizontalHeaderItem(
                 0,QTableWidgetItem('Qty.'))
         self.parts_table.tableWidget.setHorizontalHeaderItem(
@@ -40,21 +41,21 @@ class Parts_Tabs(QWidget):
         self.parts_table.tableWidget.setHorizontalHeaderItem(
                 2,QTableWidgetItem('Description'))
         self.parts_table.tableWidget.setHorizontalHeaderItem(
-                3,QTableWidgetItem('Cost'))
+                3,QTableWidgetItem('Cost   '))
         self.parts_table.tableWidget.setHorizontalHeaderItem(
-                4,QTableWidgetItem('Price'))
+                4,QTableWidgetItem('Price  '))
         self.parts_table.tableWidget.setHorizontalHeaderItem(
                 5,QTableWidgetItem('Extension'))
         self.parts_table.tableWidget.setHorizontalHeaderItem(
-                6,QTableWidgetItem('Freight')) 
+                6,QTableWidgetItem('Freight ')) 
         self.parts_table.tableWidget.setHorizontalHeaderItem(
-                7,QTableWidgetItem('Misc.')) 
+                7,QTableWidgetItem('Misc. ')) 
 
         self.parts_table.tableWidget.verticalHeader(
                 ).setSectionResizeMode(QHeaderView.ResizeToContents)
         self.parts_table.tableWidget.horizontalHeader(
                 ).setSectionResizeMode(QHeaderView.Interactive)
-        self.parts_table.tableWidget.horizontalHeader().resizeSection(2,300)
+        self.parts_table.tableWidget.horizontalHeader().resizeSection(2,500)
         self.p_layout=QGridLayout()
         self.p_layout.addWidget(self.parts_table,0,0)
         self.setLayout(self.p_layout)

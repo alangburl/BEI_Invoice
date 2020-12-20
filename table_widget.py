@@ -8,14 +8,16 @@ from PyQt5.QtCore import pyqtSlot,Qt
 class Table(QWidget):
     '''Create the tables necessary for parts and labor
     '''
-    def __init__(self,rows,columns):
+    def __init__(self,rows,columns,font):
         super().__init__()
 #        self.showMaximized()
+        self.font=font
         self.rows=rows
         self.columns=columns
         self.size_policy=QSizePolicy.Expanding
         self.init()
         self.show()
+        
     def init(self):
         '''initialize all the necessary widgets for the table
         '''
@@ -31,10 +33,8 @@ class Table(QWidget):
         self.tableWidget.setRowCount(self.rows)
         self.tableWidget.setColumnCount(self.columns)
         self.tableWidget.setSizePolicy(self.size_policy,self.size_policy)
-
-#        header = self.tableWidget.horizontalHeader()
-#        for i in range(0,self.columns):            
-#            header.setSectionResizeMode(i, QHeaderView.ResizeToContents)
+        self.tableWidget.setFont(self.font)
+        self.tableWidget.horizontalHeader().setFont(self.font)
         self.tableWidget.horizontalHeader(
                 ).setSectionResizeMode(QHeaderView.ResizeToContents)
             

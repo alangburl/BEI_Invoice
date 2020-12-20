@@ -17,6 +17,8 @@ from Envelope_printer import Envelope_Printer as EP
 from Check_Envelopes import Check_Envelopes as CE
 import Version_Control as VC
 from Change_Customer import Change_Customer as CC
+from Change_cust import Basic_Updater, Remove_Old
+from save_invoice import Save_Invoice as SI
 #prefined imports
 import subprocess,psutil
 import sys,os,time
@@ -28,7 +30,8 @@ from PyQt5.QtWidgets import (QApplication, QPushButton,QWidget,QGridLayout,
                              ,QDockWidget,QTableWidgetItem,QVBoxLayout,
                              QTabWidget,QSystemTrayIcon,QListView,
                              QAbstractItemView,QCompleter,QLabel,QMdiArea,
-                             QMdiSubWindow,QStatusBar,QHBoxLayout,QMenu)
+                             QMdiSubWindow,QStatusBar,QHBoxLayout,QMenu,
+                             QToolBar,QSplitter)
 from PyQt5.QtGui import (QFont,QIcon,QStandardItemModel,QStandardItem)
 from PyQt5.QtCore import Qt,QModelIndex
 class Invoice(QMainWindow):
@@ -64,7 +67,8 @@ class Invoice(QMainWindow):
         super().__init__()
         self.size_policy=QSizePolicy.Expanding
         self.font=QFont()
-        self.font.setPointSize(12)
+        self.font_size=14
+        self.font.setPointSize(self.font_size)
         self.showMaximized()
         self.setWindowIcon(QIcon('BEI_Logo.png'))
 #        backimage=QImage('BEI_Logo.png')
@@ -113,9 +117,6 @@ class Invoice(QMainWindow):
         self.actionSave.setShortcut('Ctrl+S')
         self.actionSave.setDisabled(True)
         self.actionSave.triggered.connect(self.save_invoice)
-#        self.actionImport=QAction('&Import Old Job',self)
-#        self.actionImport.triggered.connect(self.old_job)
-#        self.actionImport.setShortcut('Ctrl+I')
         self.printMainMenu=QMenu('Print',self)
         
         self.actionPrint=QAction('&Print All',self)
@@ -158,11 +159,10 @@ class Invoice(QMainWindow):
         self.menuFile.addMenu(self.printMainMenu)
         self.menuFile.addMenu(self.printMenu)
         self.menuFile.addAction(self.actionQuit)
-        
         self.menuEdit=self.menuBar().addMenu('&Edit')
         self.menuEdit_Change_In=QMenu('Change Basic Invoice Information',self)
         self.menuEdit_Change_Sy=QMenu('Change Operating Data',self)
-        
+
         self.actionLaborRates=QAction('&Change Standard Labor Rates',self)
         self.actionLaborRates.triggered.connect(self.labor_rates)
         self.actionAddTechnician=QAction('&Add Technician',self)
@@ -171,21 +171,14 @@ class Invoice(QMainWindow):
         self.actionChangeDate.triggered.connect(self.date_change)
         self.actionChangeCustomerAddress=QAction('&Change Customer Address',self)
         self.actionChangeCustomerAddress.triggered.connect(self.change_address)
-        
         self.actionBasicInfo=QAction('&Change Basic Information',self)
         self.actionBasicInfo.triggered.connect(self.change_basic_info)
-        self.actionChangeCustomer=QAction('&Change Customer Name',self)
-        self.actionChangeCustomer.triggered.connect(self.change_customer)
-        self.actionChangeCustomer.setDisabled(True)
         self.actionBasicInfo.setDisabled(True)
-        self.menuEdit_Change_In.addActions([self.actionBasicInfo,
-                                            self.actionChangeCustomer])
-    
         self.menuEdit_Change_Sy.addActions([self.actionLaborRates,
                                             self.actionAddTechnician,
                                             self.actionChangeDate,
                                             self.actionChangeCustomerAddress])
-        self.menuEdit.addMenu(self.menuEdit_Change_In)
+        self.menuEdit.addAction(self.actionBasicInfo)
         self.menuEdit.addMenu(self.menuEdit_Change_Sy)
         
         self.menuView=self.menuBar().addMenu('&View')
@@ -203,8 +196,11 @@ class Invoice(QMainWindow):
         self.actionViewCompany=QAction('&View Company Invoice',self)    
         self.actionViewCompany.triggered.connect(self.view_company)
         self.actionViewCompany.setEnabled(False)
+        self.actionViewInitialDate=QAction('&Start Date')
+        self.actionViewInitialDate.triggered.connect(self.view_initial_date)
+        self.actionViewInitialDate.setEnabled(False)
         self.menuView.addActions([self.actionViewLaborBreakdown,
-                                  self.actionViewAllWindows,
+                                  self.actionViewInitialDate,
                                   self.actionViewCutomer,
                                   self.actionViewCompany])
     
@@ -232,6 +228,16 @@ class Invoice(QMainWindow):
         self.actionUpdate.triggered.connect(self.updater)
         self.menuHelp.addActions([self.actionViewCheatSheet,
                                   self.actionNewCheat,self.actionUpdate])   
+        
+        tb=QToolBar('File')
+        self.addToolBar(tb)
+        tb.addAction(self.actionQuit)
+        tb.addAction(self.actionSave)
+        tb.addAction(self.actionViewInitialDate)
+        tb.addAction(self.actionViewCutomer)
+        tb.addAction(self.actionViewCompany)
+        tb.addAction(self.actionPrint)
+        
     def new_invoice_begin(self):
         '''Entering basic information:
             Job Number:
@@ -239,7 +245,7 @@ class Invoice(QMainWindow):
             Customer Name:
         '''
         try:
-            self.docked.close()
+            # self.docked.close()
             self.docked2.close()
             self.totals_table.close()
             self.save_invoice()
@@ -320,7 +326,7 @@ class Invoice(QMainWindow):
         '''Open an existing invoice
         '''
         try:
-            self.docked.close()
+            # self.docked.close()
             self.docked2.close()
             self.save_invoice()
         except:
@@ -352,9 +358,13 @@ class Invoice(QMainWindow):
         self.existing.show()
         
     def reader(self):
-        self.current_job=self.job_to_open.text()
-        self.read_in_data()
-        self.existing.close()
+        try:
+            self.current_job=self.job_to_open.text()
+            self.read_in_data()
+            self.existing.close()
+        except:
+            QMessageBox.information(self,'Job does not exist',
+                                    'Job does not exist',QMessageBox.Ok)
         
     def table(self,num):
         '''Setup the table for use with a new invoice
@@ -367,20 +377,20 @@ class Invoice(QMainWindow):
         self.actionSave.setEnabled(True)
         self.actionViewLaborBreakdown.setEnabled(True)
         self.actionBasicInfo.setEnabled(True)
-        self.actionViewAllWindows.setEnabled(True)
         self.actionViewCutomer.setEnabled(True)
         self.actionViewCompany.setEnabled(True)
-        self.actionChangeCustomer.setEnabled(True)
+        # self.actionChangeCustomer.setEnabled(True)
+        self.actionViewInitialDate.setEnabled(True)
         
-        self.docked=QMdiSubWindow()
-        self.docked.setWindowTitle('Invoice {}'.format(num))
+        # self.docked=QMdiSubWindow()
+        # self.docked.setWindowTitle('Invoice {}'.format(num))
         self.num=num
         self.tabs=QTabWidget(self)
-        self.parts=Parts_Tabs(num)
+        self.parts=Parts_Tabs(num,self.font)
         self.tabs.addTab(self.parts,'Parts')
-        self.labor=Labor_Tabs(num)
+        self.labor=Labor_Tabs(num,self.font)
         self.tabs.addTab(self.labor,'Labor')
-        self.docked.setWidget(self.tabs)
+        # self.docked.setWidget(self.tabs)
         
         self.parts.total.connect(self.calculate_totals)
         self.labor.labor_total.connect(self.calculate_totals)
@@ -390,13 +400,30 @@ class Invoice(QMainWindow):
         self.cust_label.setFont(self.font)
         self.machine_label=QLabel('Machine: {}'.format(self.machine_text),self)
         self.machine_label.setFont(self.font)
-        lay=QHBoxLayout()
+        self.job_label=QLabel('Job Number: {}'.format(self.current_job),self)
+        self.job_label.setFont(self.font)
+        self.start_date=QLabel('Start Date: {}'.format('No Date'),self)
+        self.start_date.setFont(self.font)
+        
+        self.labor_display=QTextEdit(self)
+        self.labor_display.setFont(self.font)
+        self.labor_display.setReadOnly(True)
+        self.labor_display.setText('Labor Breakdown:')
+        
+        lay=QVBoxLayout()
+        lay.addWidget(self.job_label)
         lay.addWidget(self.cust_label)
         lay.addWidget(self.machine_label)
+        lay.addWidget(self.start_date)
+        lay.addWidget(self.labor_display)
         cust_display.setLayout(lay)
         
+        self.docked2=QDockWidget('Invoice Data',self)
+        self.docked2.setWidget(cust_display)
+        self.addDockWidget(Qt.RightDockWidgetArea,self.docked2)
+        
         #design and insert the totals table
-        self.totals_table=Table(7,2)
+        self.totals_table=Table(7,2,self.font)
         self.totals_table.tableWidget.setItem(0,0,
                                               QTableWidgetItem('Parts:'))
         self.totals_table.tableWidget.setItem(1,0,
@@ -418,24 +445,37 @@ class Invoice(QMainWindow):
         self.comments.setSizePolicy(self.size_policy,self.size_policy)
         self.comments.setText('Comments:\n')
         
-        self.additional_docking=QWidget(self)
-        layout=QVBoxLayout(self)
-        layout.addWidget(cust_display)
-        layout.addWidget(self.totals_table)
-        layout.addWidget(self.comments)
-        self.additional_docking.setLayout(layout)
+        vsplit=QSplitter(Qt.Vertical)
+        vsplit.addWidget(self.tabs)
         
-        self.docked2=QMdiSubWindow()
-        self.docked2.setWidget(self.additional_docking)
-        self.docked2.setWindowTitle('Information')
+        hsplit=QSplitter(Qt.Horizontal)
+        hsplit.addWidget(self.totals_table)
+        hsplit.addWidget(self.comments)
+        hsplit.setSizes([100,500])
+        vsplit.addWidget(hsplit)
+        vsplit.setSizes([225,90])
         
-        self.mdi=QMdiArea()
-        self.mdi.addSubWindow(self.docked2)
-        self.mdi.addSubWindow(self.docked)
+        self.setCentralWidget(vsplit)
+        # self.additional_docking=QWidget(self)
+        # layout=QHBoxLayout(self)
+        # layout.addWidget(cust_display)
+        # layout.addWidget(self.totals_table)
+        # layout.addWidget(self.comments)
+        # self.additional_docking.setLayout(layout)
+        
+        # self.docked2=QDockWidget('Information',self)
+        # self.docked2.setWidget(self.additional_docking)
+        # self.addDockWidget(Qt.BottomDockWidgetArea,self.docked2)
+        # self.docked2=QMdiSubWindow()
+        # self.docked2.setWidget(self.additional_docking)
+        # self.docked2.setWindowTitle('Information')
+        
+        # self.mdi=QMdiArea()
+        # self.mdi.addSubWindow(self.docked2)
+        # self.mdi.addSubWindow(self.docked)
 
-        self.mdi.tileSubWindows()
-        self.setCentralWidget(self.mdi)
-#        self.window_saved=self.saveState(1)
+        # self.mdi.tileSubWindows()
+        # self.setCentralWidget(self.tabs)
         
     def recent_invoices(self):
         '''Show a list of recently opened invoices
@@ -467,8 +507,11 @@ class Invoice(QMainWindow):
     def recall(self,index):
         item=self.recently_opened_invoice.itemFromIndex(index)
         job_number=item.text()
-        self.docked.close()
-        self.docked2.close()
+        try:
+            # self.docked.close()
+            self.docked2.close()
+        except:
+            True
         self.save_invoice()
         self.current_job=job_number
         self.read_in_data()
@@ -479,68 +522,14 @@ class Invoice(QMainWindow):
         if self.current_job==str:
             pass
         else:
-            location=os.path.join(os.path.join(self.base_directory,
-                                       'Saved_Invoices'),self.current_job)
-            parts_file=os.path.join(location,'Parts.csv')
-            #first read and write the parts information
-            f=open(parts_file,'w')
-            row=[]
-            for i in range(100):
-                try:
-                    for j in range(8):
-                        if j==0:
-                            if self.parts.parts_table.tableWidget.item(i,j).text()!='*':
-                                val=float(self.parts.parts_table.tableWidget.item(i,
-                                                                          j).text())
-                            elif self.parts.parts_table.tableWidget.item(i,j).text()=='*':
-                                val=self.parts.parts_table.tableWidget.item(i,j).text()
-                            row.append(val)
-                        else:
-                            try:
-                                val=self.parts.parts_table.tableWidget.item(i,
-                                                                        j).text()
-                                row.append(val)
-                            except:
-                                row.append('')
-                    if '\n' in row[-1]:
-                        row[-1]=row[-1].split(sep='\n')[0]
-                    row[2]=row[2].replace(',','.')
-                    f.write('{},{},{},{},{},{},{},{}\n'.format(*row))
-                    row=[]
-                except:
-                    break
-            f.close()
-            #save the total table
-            total_location=os.path.join(location,'Totals.csv')
-            h=open(total_location,'w')
+            
+            self.invoice_saver=SI(self.base_directory,self.current_job)
+            self.invoice_saver.parts_saving(self.parts)
             t_row=[self.parts_,self.labor_,self.supplies,self.freight_,
                    self.subtotal,self.taxed,self.totals]
-            for i in t_row:
-                try:
-                    float(i)
-                    h.write('{:.2f}\n'.format(i))
-                except:
-                    h.write('0')
-            h.close()
-            #save the comments
-            comments_location=os.path.join(location,'Comments.csv')
-            v=open(comments_location,'w')
-            v.write(self.comments.toPlainText())
-            v.close()
-            #finally save the labor information
-            #get the number of techs showing
-            count=self.labor.counts
-            
-            for l in range(count):
-                labor_location=os.path.join(location,'tech{}.csv'.format(l))
-                o=open(labor_location,'w')
-                #get the data from the labor class
-                tech_labor=self.labor.read_data_out(l)
-                for k in range(len(tech_labor)):
-                    if '\n' in list(tech_labor[k][-1]):
-                        tech_labor[k][-1]=float(tech_labor[k][-1])
-                    o.write('{},{},{},{},{},{},{},{}\n'.format(*tech_labor[k]))
-                o.close()
+            self.invoice_saver.total_table(t_row)
+            self.invoice_saver.comments(self.comments)
+            self.invoice_saver.labor_saving(self.labor)
                 
         self.statusbar.showMessage('Invoice {} saved'.format(self.current_job),
                            5000)  
@@ -566,7 +555,6 @@ class Invoice(QMainWindow):
             QMessageBox.information(self,'Save Failure',
                                         'Closing PDF and trying again',
                                         QMessageBox.Ok)
-#            self.save_invoice()
         
     def add_tech(self):
         '''Adding a technician to the company:
@@ -598,7 +586,6 @@ class Invoice(QMainWindow):
                                             'Application must be restarted to apply these changes',
                                             QMessageBox.Ok)
         
-    
     def read_in_data(self):
         self.actionPartialPayment.setEnabled(True)
         self.actionFinanceCharges.setEnabled(True)
@@ -618,9 +605,14 @@ class Invoice(QMainWindow):
         self.customer,self.machine_text=basic[1].replace('\n',''),basic[2].replace('\n','')
 
         self.tax=float(basic[3].split(sep=',')[0])
+        
         self.table(self.current_job)
+        self.job_label.setText('Job Number: {}'.format(self.current_job))
         self.machine_label.setText('Machine: {}'.format(self.machine_text))
         self.cust_label.setText('Customer: {}'.format(self.customer))
+        date=self.preview_initial_date()
+        self.start_date.setText('Start Date: {}'.format(date))
+
         #read in the parts data from the file and hand it off the the parts_tab
         #class to be placed in the table
         location=os.path.join(os.path.join(self.base_directory,
@@ -688,6 +680,9 @@ class Invoice(QMainWindow):
             labor_data=[o.split(sep=',') for o in lab_data]
             self.labor.read_in_data(l,labor_data)
             
+        combine=self.pre_breakdown()
+        self.labor_display.setText('Labor Breakdown\n'+combine)
+            
     def reset_data(self):
         self.parts_,self.labor_,self.supplies,self.freight_,self.subtotal,self.taxed,self.totals=[0,0,0,0,0,0,0]
         self.partial,self.finance=0,0
@@ -752,7 +747,11 @@ class Invoice(QMainWindow):
         self.totals=self.subtotal+self.taxed+self.finance-self.partial
         self.totals_table.tableWidget.setItem(
                 6,1,QTableWidgetItem('${:,.2f}'.format(
-                        self.totals)))  
+                        self.totals))) 
+        
+        breakdown=self.pre_breakdown()
+        dat='Labor Breakdown:\n'+breakdown
+        self.labor_display.setText(dat)
         
     def print_invoice(self):
         '''
@@ -791,10 +790,10 @@ class Invoice(QMainWindow):
 #        self.save_invoice()
         self.close()
         
-    def breakdown(self):
-        '''view the labor break down
-        '''
-        #open the labor rates to get the names 
+    def pre_breakdown(self):
+        #open the labor rates to get the names
+        #but save the data first
+        self.save_invoice(no_build=True)
         loc=os.path.join(self.base_directory,'Basic_Information_Totals')
         file_loc=os.path.join(loc,'Labor_Rates.csv')
         f=open(file_loc,'r')
@@ -809,8 +808,15 @@ class Invoice(QMainWindow):
         combined=''
         for i in range(len(individauls)):
             combined+='{}: ${:,.2f}\n'.format(names[i],individauls[i])
+        return combined
+        
+    def breakdown(self):
+        '''view the labor break down
+        '''
+        combined=self.pre_breakdown()
         QMessageBox.information(self,'Labor Breakdown',combined,
                                             QMessageBox.Ok)
+        
     def date_change(self):
         '''change the data on the invoices for the month
         '''
@@ -909,118 +915,80 @@ class Invoice(QMainWindow):
         f.close()
         self.calculate_totals()
         
-    def change_basic_info(self):
-        #first read in the current status of the basic info
-        location=os.path.join(os.path.join(self.base_directory,
-                                           'Saved_Invoices'),
-                                            '{}'.format(self.current_job))
-        e=open(os.path.join(location,'Basic_Info.csv'),'r')
-        basic=e.readlines()
-        e.close()
+    def change_basic_info(self):                
+        self.update_values=New_Invoice(12,self.base_directory,True)
+        self.update_values.job_number.setText(str(self.current_job))
+        self.update_values.job_number.setEnabled(False)
         
-        self.update_info=QWidget()
-        self.update_info.setWindowTitle('Update Basic Information')
-        self.update_info.setWindowIcon(QIcon('BEI_Logo.png'))
-        mach=QLabel('Machine',self)
-        mach.setFont(self.font)
-        mach.setSizePolicy(self.size_policy,self.size_policy)
-        
-        tax=QLabel('Tax [%]',self)
-        tax.setFont(self.font)
-        tax.setSizePolicy(self.size_policy,self.size_policy)
-        
-        self.machine=QLineEdit(self)
-        self.machine.setFont(self.font)
-        self.machine.setSizePolicy(self.size_policy,self.size_policy)
-        self.machine.setText(basic[2])
-        
-        self.tax_value=QLineEdit(self)
-        self.tax_value.setFont(self.font)
-        self.tax_value.setSizePolicy(self.size_policy,self.size_policy)
-        self.tax_value.setText(str(round(float(basic[3].split(sep=',')[0])*100,2)))
-        
-        update=QPushButton('Update',self)
-        update.setFont(self.font)
-        update.setSizePolicy(self.size_policy,self.size_policy)
-        update.clicked.connect(self.update_basic_values)
-        
-        layout=QGridLayout()
-        layout.addWidget(mach,0,0)
-        layout.addWidget(self.machine,0,1)
-        layout.addWidget(tax,1,0)
-        layout.addWidget(self.tax_value,1,1)
-        layout.addWidget(update,2,0)
-        self.update_info.setLayout(layout)
-        self.update_info.show()
+        self.update_values.customer_name.setText(self.customer)
+        self.update_values.fill_information()
+        index=self.update_values.machine.findText(self.machine_text)
+        if index>=0:
+            self.update_values.machine.setCurrentIndex(index)
+        #set the tax percentage
+        self.update_values.tax_line.setText('{:.2f}'.format(self.tax*100))
+        #set the two address lines as read only so they can't be changed in 
+        #this interace
+        self.add_line1=self.update_values.customer_address_line_1.text()
+        self.add_line2=self.update_values.customer_address_line_2.text()
+        # self.update_values.customer_address_line_1.setReadOnly(True)
+        # self.update_values.customer_address_line_2.setReadOnly(True)
+        #now time to process the new values
+        self.update_values.start.clicked.connect(self.update_basic_values)
         
     def update_basic_values(self):
-        self.update_info.close()
         location=os.path.join(os.path.join(self.base_directory,
                                            'Saved_Invoices'),
                                             '{}'.format(self.current_job))
-        e=open(os.path.join(location,'Basic_Info.csv'),'r')
-        basic=e.readlines()
-        e.close()
-        flag=False
-        #change the information in basic[2] and basic[3] to match the new values
-        if basic[2].split(sep='\n')[0]!=self.machine.text():
-            old=basic[2].split(sep='\n')[0].replace(' ','_')
-            cust=basic[1].split(sep='\n')[0].replace(' ','_')
-            file_name=basic[0].split(sep='\n')[0]+'.pdf'
-            flag=True
-            basic[2]=self.machine.text()
-            self.machine_text=basic[2]
-            self.machine_label.setText('Machine: {}'.format(self.machine_text))
-        if float(basic[3].split(sep=',')[0])!=float(self.tax_value.text())/100:
-            try:
-                tax_code,ok=QInputDialog.getText(self,'Update Tax Code','Tax Code: ',
-                                                 QLineEdit.Normal,
-                                     basic[3].split(sep=',')[1].split(sep='\n')[0])
-            except:
-                tax_code,ok=QInputDialog.getText(self,'Update Tax Code','Tax Code: ',
-                                                 QLineEdit.Normal,"")
-            basic[3]='{},{}'.format(float(self.tax_value.text())/100,tax_code)
-            
-        self.tax=float(self.tax_value.text())/100
-        
-        f=open(os.path.join(location,'Basic_Info.csv'),'w')
-        for i in range(len(basic)):
-            if '\n' not in basic[i]:
-                f.write('{}\n'.format(basic[i]))
+        location=os.path.join(location,'Basic_Info.csv')
+        #get rid of the old job file, do this no regarless of what has
+        #been changed for sake of ease
+        rm_loc=os.path.join(self.customer.replace(' ','_'),
+                            self.machine_text.replace(' ', '_'))
+        rm_loc=os.path.join(rm_loc,'{}.pdf'.format(self.current_job))
+        Remove_Old(rm_loc)
+        #first need to determine what all has been changed. The things 
+        #that can change from this interface are:
+            #1.) Customer Name
+            #2.) Machine
+            #3.) Tax Percentage
+        #first we will handle the easy one-- changing tax
+        new_customer=self.update_values.customer
+        new_machine=self.update_values.machine_
+        new_line1=self.update_values.line1
+        new_line2=self.update_values.line2
+        new_tax=float(self.update_values.tax_line.text())/100
+
+        new_values={}
+        if new_tax!=self.tax:
+            # need to update the tax
+            #first, get the updated tax code
+            if new_tax!=0.0:
+                tax_code,ok=QInputDialog.getText(self,'Tax Code','Tax Code:',
+                                                  QLineEdit.Normal,"")
             else:
-                f.write('{}'.format(basic[i]))
-        f.close()
-        
-        #change the percent shown in the total value
-        self.totals_table.tableWidget.setItem(5,0,
+                tax_code=''
+            self.tax=new_tax
+            new_values['tax']=[self.tax,tax_code]
+            self.totals_table.tableWidget.setItem(5,0,
                                               QTableWidgetItem('Tax: {:.2f}%'
-                                               .format(self.tax*100)))
-        #next update the totals
+                                                .format(self.tax*100)))
+        
+        if new_machine!=self.machine_text:
+            new_values['machine']=new_machine
+            self.machine_label.setText('Machine: {}'.format(new_machine))
+        
+        if new_customer!=self.customer or new_line1!=self.add_line1 or new_line2!=self.add_line2:
+            if new_line1!=self.add_line1 or new_line2!=self.add_line2:
+                QMessageBox.information(self,'Address Update',
+                                    'Address will only be changed for\nthis billing cycle.',QMessageBox.Ok)
+            new_values['customer']=[new_customer,new_line1,new_line2]
+            self.cust_label.setText('Customer: {}'.format(new_customer))
+            self.customer=new_customer
+        
         self.calculate_totals()
-        self.save_invoice()
-        time.sleep(3)
-        if flag:
-        #depending on if the machine has been updated, get rid of the previous
-        #version of the file and start change it to the new location
-            location=os.path.join(os.path.expanduser('~/Desktop'),
-                                  'BEI_Invoices')
-            old_location_cust_=os.path.join(os.path.join(location,'Customer'),
-                                           cust)
-            old_location_cust=os.path.join(old_location_cust_,old)
-            old_final_cust=os.path.join(old_location_cust,file_name)
-            
-            old_location_comp_=os.path.join(os.path.join(location,'Company'),
-                                           cust)
-            old_location_comp=os.path.join(old_location_comp_,old)
-            len_old=len(os.listdir(old_location_comp))
-            old_final_comp=os.path.join(old_location_comp,file_name)
-            
-            if len_old==1:
-                shutil.rmtree(old_location_comp)
-                shutil.rmtree(old_location_cust)
-            else:
-                os.unlink(old_final_comp)
-                os.unlink(old_final_cust)
+        Basic_Updater(location,new_values)
+        # self.save_invoice()
                 
     def view_windows(self):
         '''Used to re-initialize the totals and main window'''
@@ -1036,7 +1004,7 @@ class Invoice(QMainWindow):
                                        'Do you want to close the application?',
                                        QMessageBox.Yes| QMessageBox.No, 
                                        QMessageBox.No)
-                        #check to see if the program is up to date
+                        # check to see if the program is up to date
                 checker,new,current=VC.check(self.base_directory)
                 if checker:
                     QMessageBox.information(self,'Software Version',
@@ -1140,16 +1108,39 @@ class Invoice(QMainWindow):
     def billing_envelopes(self):
         self.billing_=CE(self.base_directory)
     
-    def change_customer(self):
-        changer=CC(self.base_directory,self.current_job)
-        customers=changer.Customer()
+    # def change_customer(self):
+    #     changer=CC(self.base_directory,self.current_job)
+    #     customers=changer.Customer()
         
-        item,ok=QInputDialog.getItem(self,'New Customer','Listed Customers:'
-                                     ,customers,0,False)
-        if item and ok:
-            changer.change_name(item)
-        self.save_invoice(no_build=True)
-        self.read_in_data()
+    #     item,ok=QInputDialog.getItem(self,'New Customer','Listed Customers:'
+    #                                  ,customers,0,False)
+    #     if item and ok:
+    #         changer.change_name(item)
+    #     self.save_invoice(no_build=True)
+    #     self.cust_label.setText('Customer: {}'.format(item))
+        
+    def view_initial_date(self):
+        date=self.preview_initial_date()
+        if date!='No Date':
+            QMessageBox.information(self,'Invoice Start Date',
+                                    'Invoice started on: {}'.format(date),
+                                    QMessageBox.Ok)
+        else:
+            QMessageBox.information(self,'Invoice Start Date',
+                                    'File create before current software version',
+                                    QMessageBox.Ok)
+            
+    def preview_initial_date(self):
+        loc=os.path.join(os.path.join(self.base_directory,'Saved_Invoices'),
+                 self.current_job)
+        try:
+            file=os.path.join(loc,'job.init')
+            f=open(file,'r')
+            date=f.readlines()[0]
+            f.close()
+        except:
+            date='No Date'
+        return date
             
 if __name__=="__main__":
     app=QApplication(sys.argv)

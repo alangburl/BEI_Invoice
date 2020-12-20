@@ -4,10 +4,10 @@ import sys
 from PyQt5.QtWidgets import (QApplication, QTableWidgetItem,QHeaderView)
 
 class Labor_Setup():   
-    def __init__(self):
+    def __init__(self,font):
         super().__init__()
         #setting up the necessary stuff for each tech
-        self.labor_table=Table(500,8)
+        self.labor_table=Table(500,8,font)
         self.labor_table.tableWidget.setHorizontalHeaderItem(0,
                                                      QTableWidgetItem('Date'))
         self.labor_table.tableWidget.setHorizontalHeaderItem(1,

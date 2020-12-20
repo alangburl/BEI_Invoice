@@ -12,8 +12,9 @@ class New_Invoice(QWidget):
         2.) Launching a new table for parts and labor. 
         3.) Automatically saving the new invoice by the file name given 
     '''
-    def __init__(self,font_size,base_directory):
+    def __init__(self,font_size,base_directory,external_driver=False):
         super().__init__()
+        self.external_driver=external_driver
         self.completed=False
         self.setGeometry(400,400,600,450)
         #global policies
@@ -210,7 +211,8 @@ class New_Invoice(QWidget):
         self.machine_=self.machine.currentText()
         self.tax=float(self.tax_line.text())/100
         if self.tax!=0.0:
-            self.tax_code,ok=QInputDialog.getText(self,'Tax Code','Tax Code:',
+            if self.external_driver==False:
+                self.tax_code,ok=QInputDialog.getText(self,'Tax Code','Tax Code:',
                                                   QLineEdit.Normal,"")
         else:
             self.tax_code=''

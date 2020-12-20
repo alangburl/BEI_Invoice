@@ -14,8 +14,9 @@ class Labor_Tabs(QWidget):
     '''
     previous_row=int
     labor_total=pyqtSignal(float)
-    def __init__(self,job_number):
+    def __init__(self,job_number,font):
         super().__init__()
+        self.font=font
         self.init()
         self.setWindowTitle('BEI Invoice Number {}'.format(job_number))
     def init(self):
@@ -52,14 +53,14 @@ class Labor_Tabs(QWidget):
             
         self.technicians=QTabWidget(self)
         #set up the tab for each technician
-        self.t0=Labor_Setup().labor_table
-        self.t1=Labor_Setup().labor_table
-        self.t2=Labor_Setup().labor_table
-        self.t3=Labor_Setup().labor_table
-        self.t4=Labor_Setup().labor_table
-        self.t5=Labor_Setup().labor_table
-        self.t6=Labor_Setup().labor_table
-        self.t7=Labor_Setup().labor_table
+        self.t0=Labor_Setup(self.font).labor_table
+        self.t1=Labor_Setup(self.font).labor_table
+        self.t2=Labor_Setup(self.font).labor_table
+        self.t3=Labor_Setup(self.font).labor_table
+        self.t4=Labor_Setup(self.font).labor_table
+        self.t5=Labor_Setup(self.font).labor_table
+        self.t6=Labor_Setup(self.font).labor_table
+        self.t7=Labor_Setup(self.font).labor_table
         self.t_tabs=[self.t0,self.t1,self.t2,self.t3,
                      self.t4,self.t5,self.t6,self.t7]
         for i in range(len(tech_names)):
