@@ -58,7 +58,7 @@ class Edit_Customer_Information(QWidget):
                 self.close()
         else:
             self.topics=[]
-            for i in c_data:
+            for i in sorted(c_data):
                 self.topics.append(i.replace('\n',''))
         
             self.entry=QStandardItemModel()

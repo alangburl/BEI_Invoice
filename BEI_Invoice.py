@@ -16,13 +16,11 @@ from enevelope_writer import Enevelope_Writer as EWriter
 from Envelope_printer import Envelope_Printer as EP
 from Check_Envelopes import Check_Envelopes as CE
 import Version_Control as VC
-from Change_Customer import Change_Customer as CC
 from Change_cust import Basic_Updater, Remove_Old
 from save_invoice import Save_Invoice as SI
 #prefined imports
 import subprocess,psutil
 import sys,os,time
-import shutil
 from pathlib import Path
 from PyQt5.QtWidgets import (QApplication, QPushButton,QWidget,QGridLayout,
                              QSizePolicy,QLineEdit,QTextEdit,

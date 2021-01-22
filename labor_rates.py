@@ -9,7 +9,7 @@ class Labor_Rates(QWidget):
     def __init__(self,base_directory,font,size_policy):
         super().__init__()
         self.base=base_directory
-        self.rates=Table(6,3)
+        self.rates=Table(6,3,font)
         self.rates.tableWidget.setHorizontalHeaderItem(0,
                                                    QTableWidgetItem('Name'))
         self.rates.tableWidget.setHorizontalHeaderItem(1,
