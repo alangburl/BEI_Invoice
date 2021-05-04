@@ -119,7 +119,7 @@ class PDFWriter():
         self.writer.setPageMargins(QMarginsF(30,30,30,30))
         
         self.painter=QPainter(self.writer)
-        
+        self.painter.setFont(QFont('times',14))
         self.font=QFont()
         self.font.setPointSize(14)
             
